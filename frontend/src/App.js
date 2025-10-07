@@ -1,10 +1,15 @@
 import './App.css';
 import './styles/DoshaQuiz.css';
 import './styles/QuickRemedies.css';
+import './styles/Auth.css';
+import './styles/Dashboard.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import DoshaQuiz from './pages/doshiquiz.jsx';
 import QuickRemedies from './pages/QuickRemedies.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 
 // Navigation Component
 function Navigation() {
@@ -29,11 +34,33 @@ function Navigation() {
           <li><button onClick={() => scrollToSection('herbs')} className="nav-link-btn">Explore Herbs</button></li>
           <li><button onClick={() => scrollToSection('consultation')} className="nav-link-btn">Book Consultation</button></li>
           <li><button onClick={() => scrollToSection('dosha')} className="nav-link-btn">Dosha Quiz</button></li>
+          <li><Link to="/login" className="nav-link-btn login-nav-btn">Login</Link></li>
         </ul>
       </div>
     </nav>
   );
 }
+
+// Add login button styling to App.css
+const additionalCSS = `
+.login-nav-btn {
+  background: linear-gradient(135deg, #38a169, #2f855a) !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.login-nav-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 10px rgba(56, 161, 105, 0.4) !important;
+  color: white !important;
+}
+`;
+
+// Rest of your existing components remain the same...
+// (HeroBanner, LearnAyurveda, ExploreHerbs, BookConsultation, etc.)
 
 // Hero Banner Component
 function HeroBanner() {
@@ -326,11 +353,11 @@ function Footer() {
             </ul>
           </div>
           <div className="footer-section">
-            <h4>Resources</h4>
+            <h4>Account</h4>
             <ul>
-              <li><ScrollToTopLink to="/dosha-quiz" className="footer-link-btn">Dosha Assessment</ScrollToTopLink></li>
-              <li><ScrollToTopLink to="/quick-remedies" className="footer-link-btn">Natural Remedies</ScrollToTopLink></li>
-              <li><button onClick={() => scrollToSection('consultation')} className="footer-link-btn">Expert Consultation</button></li>
+              <li><ScrollToTopLink to="/login" className="footer-link-btn">Login</ScrollToTopLink></li>
+              <li><ScrollToTopLink to="/signup" className="footer-link-btn">Sign Up</ScrollToTopLink></li>
+              <li><ScrollToTopLink to="/dashboard" className="footer-link-btn">Dashboard</ScrollToTopLink></li>
             </ul>
           </div>
           <div className="footer-section">
@@ -372,6 +399,9 @@ function App() {
         <Route path="/" element={<Homepage />} />
         <Route path="/dosha-quiz" element={<DoshaQuiz />} />
         <Route path="/quick-remedies" element={<QuickRemedies />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
