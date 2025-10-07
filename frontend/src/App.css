@@ -74,6 +74,22 @@ body {
   font-family: inherit;
 }
 
+/* Dashboard button: reuse login button styling with slight variation */
+.dashboard-nav-btn {
+  background: linear-gradient(135deg, #4a90e2, #1f78d1) !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.dashboard-nav-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 10px rgba(31, 120, 209, 0.35) !important;
+  color: white !important;
+}
+
 .nav-link-btn:hover {
   color: #8BC34A;
 }

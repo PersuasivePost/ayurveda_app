@@ -34,6 +34,7 @@ function Navigation() {
           <li><button onClick={() => scrollToSection('herbs')} className="nav-link-btn">Explore Herbs</button></li>
           <li><button onClick={() => scrollToSection('consultation')} className="nav-link-btn">Book Consultation</button></li>
           <li><button onClick={() => scrollToSection('dosha')} className="nav-link-btn">Dosha Quiz</button></li>
+          <li><Link to="/dashboard" className="nav-link-btn dashboard-nav-btn">Dashboard</Link></li>
           <li><Link to="/login" className="nav-link-btn login-nav-btn">Login</Link></li>
         </ul>
       </div>
