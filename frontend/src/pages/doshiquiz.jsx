@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import "../styles/DoshaQuiz.css";
 
 const questions = [
   {
@@ -16,49 +17,100 @@ const questions = [
     question: "How is your appetite and digestion?",
     options: [
       { text: "Irregular, sometimes skips meals", dosha: "Vata" },
-      { text: "Strong appetite, gets angry when hungry", dosha: "Pitta" },
+      { text: "Strong appetite, gets irritated when hungry", dosha: "Pitta" },
       { text: "Slow digestion, prefers light food", dosha: "Kapha" },
     ],
   },
   {
     id: 3,
-    question: "What best describes your sleep pattern?",
+    question: "How is your sleep pattern?",
     options: [
       { text: "Light, easily disturbed", dosha: "Vata" },
       { text: "Moderate, 6–8 hours", dosha: "Pitta" },
-      { text: "Heavy, long sleep, hard to wake up", dosha: "Kapha" },
+      { text: "Heavy, long, hard to wake up", dosha: "Kapha" },
     ],
   },
   {
     id: 4,
-    question: "How would you describe your temperament?",
+    question: "How do you react to stress?",
     options: [
-      { text: "Worry-prone, creative, easily distracted", dosha: "Vata" },
-      { text: "Focused, perfectionist, can get irritated", dosha: "Pitta" },
-      { text: "Calm, patient, laid-back", dosha: "Kapha" },
+      { text: "Anxious or worried", dosha: "Vata" },
+      { text: "Irritated or angry", dosha: "Pitta" },
+      { text: "Withdrawn or sluggish", dosha: "Kapha" },
     ],
   },
   {
     id: 5,
-    question: "How do you react to stress?",
+    question: "Which describes your energy levels best?",
     options: [
-      { text: "Anxious or nervous", dosha: "Vata" },
-      { text: "Irritated or angry", dosha: "Pitta" },
-      { text: "Withdrawn or tired", dosha: "Kapha" },
+      { text: "Variable – bursts of energy followed by fatigue", dosha: "Vata" },
+      { text: "Consistent and intense", dosha: "Pitta" },
+      { text: "Slow to start but lasts long", dosha: "Kapha" },
+    ],
+  },
+  {
+    id: 6,
+    question: "How do you handle weather changes?",
+    options: [
+      { text: "Hate the cold, skin gets dry", dosha: "Vata" },
+      { text: "Feel uncomfortable in heat", dosha: "Pitta" },
+      { text: "Do fine in most weather but dislike humidity", dosha: "Kapha" },
+    ],
+  },
+  {
+    id: 7,
+    question: "Which best describes your personality?",
+    options: [
+      { text: "Creative, quick to learn, easily distracted", dosha: "Vata" },
+      { text: "Focused, ambitious, perfectionist", dosha: "Pitta" },
+      { text: "Calm, caring, dependable", dosha: "Kapha" },
+    ],
+  },
+  {
+    id: 8,
+    question: "How is your memory?",
+    options: [
+      { text: "Quick to learn but forgets easily", dosha: "Vata" },
+      { text: "Sharp and precise", dosha: "Pitta" },
+      { text: "Slow to learn but remembers for long", dosha: "Kapha" },
+    ],
+  },
+  {
+    id: 9,
+    question: "What best describes your speech style?",
+    options: [
+      { text: "Fast, talkative, sometimes unclear", dosha: "Vata" },
+      { text: "Clear, direct, confident", dosha: "Pitta" },
+      { text: "Calm, slow, pleasant", dosha: "Kapha" },
+    ],
+  },
+  {
+    id: 10,
+    question: "How do you feel after physical activity?",
+    options: [
+      { text: "Energized but tired quickly", dosha: "Vata" },
+      { text: "Sweaty, hot, and competitive", dosha: "Pitta" },
+      { text: "Slow to start but recover well", dosha: "Kapha" },
     ],
   },
 ];
 
 const doshaDescriptions = {
-  Vata: "Vata types are energetic, creative, and quick-thinking but may experience anxiety and irregular routines. Balancing routines, warmth, and grounding foods help.",
-  Pitta: "Pitta types are driven, intelligent, and ambitious but prone to anger and overheating. Cooling foods, calmness, and moderation bring balance.",
-  Kapha: "Kapha types are calm, strong, and compassionate but can become sluggish or complacent. Stimulation, variety, and light foods help balance them.",
+  Vata: "You are Vata dominant — energetic, creative, and quick-thinking but prone to anxiety and irregular routines. Balance yourself with warmth, routine, and grounding foods.",
+  Pitta: "You are Pitta dominant — driven, sharp, and ambitious but prone to anger and overheating. Cooling foods, calmness, and patience help balance your fire.",
+  Kapha: "You are Kapha dominant — calm, loyal, and strong but can become sluggish or complacent. Stimulating activity and light foods help keep you in balance.",
 };
 
 const doshaIcons = {
   Vata: "🌪️",
   Pitta: "🔥", 
   Kapha: "🌍"
+};
+
+const doshaColors = {
+  Vata: "#e0f2f1",
+  Pitta: "#fff3e0", 
+  Kapha: "#f3e5f5"
 };
 
 // Navigation Component for Quiz Page
@@ -105,7 +157,7 @@ export default function DoshaQuiz() {
     
     // Scroll to result smoothly
     setTimeout(() => {
-      const resultElement = document.querySelector('.result-container');
+      const resultElement = document.querySelector('.result-section');
       if (resultElement) {
         resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -124,11 +176,9 @@ export default function DoshaQuiz() {
       <QuizNavigation />
       
       <div className="quiz-container">
-        <div className="quiz-header">
-          <h1 className="quiz-title">🧘 Ayurvedic Dosha Quiz</h1>
-          <p className="quiz-subtitle">Discover your unique Ayurvedic constitution</p>
-        </div>
-
+        <h2 className="quiz-title">🪷 Ayurvedic Dosha Quiz</h2>
+        <p className="quiz-subtitle">Discover your unique Ayurvedic constitution with our comprehensive assessment</p>
+        
         {!result ? (
           <div className="quiz-content">
             <div className="progress-bar">
@@ -138,26 +188,31 @@ export default function DoshaQuiz() {
               ></div>
             </div>
             <p className="progress-text">
-              Question {Object.keys(answers).length} of {questions.length}
+              Question {Object.keys(answers).length} of {questions.length} completed
             </p>
 
             {questions.map((q) => (
-              <div key={q.id} className="question-card">
-                <h3 className="question-title">{q.question}</h3>
+              <div key={q.id} className="question-block">
+                <h3 className="question-title">{q.id}. {q.question}</h3>
                 <div className="options-container">
                   {q.options.map((opt, idx) => (
                     <label
                       key={idx}
-                      className={`option-label ${
+                      className={`option ${
                         answers[q.id] === opt.dosha ? "selected" : ""
                       }`}
+                      style={{
+                        borderColor: answers[q.id] === opt.dosha ? 
+                          (opt.dosha === 'Vata' ? '#00695c' : 
+                           opt.dosha === 'Pitta' ? '#e65100' : '#4a148c') : '#e0e0e0'
+                      }}
                     >
                       <input
                         type="radio"
                         name={`question-${q.id}`}
                         value={opt.dosha}
-                        className="option-radio"
                         onChange={() => handleSelect(q.id, opt.dosha)}
+                        className="option-radio"
                       />
                       <span className="option-text">{opt.text}</span>
                       <span className="dosha-indicator">{doshaIcons[opt.dosha]}</span>
@@ -168,34 +223,64 @@ export default function DoshaQuiz() {
             ))}
 
             <button
-              className="submit-button"
+              className="submit-btn"
               onClick={calculateDosha}
               disabled={Object.keys(answers).length < questions.length}
             >
               {Object.keys(answers).length < questions.length 
-                ? `Answer ${questions.length - Object.keys(answers).length} more questions`
-                : "🔮 Discover My Dosha"
+                ? `Complete ${questions.length - Object.keys(answers).length} more questions`
+                : "🔮 See My Dosha"
               }
             </button>
           </div>
         ) : (
-          <div className="result-container">
-            <div className="result-card">
-              <div className="result-icon">{doshaIcons[result]}</div>
-              <h2 className="result-title">Your Dominant Dosha: {result}</h2>
-              <p className="result-description">{doshaDescriptions[result]}</p>
-              
-              <div className="result-actions">
-                <button
-                  onClick={handleRetakeQuiz}
-                  className="retake-button"
-                >
-                  🔄 Retake Quiz
-                </button>
-                <Link to="/" className="home-button">
-                  🏠 Back to Home
-                </Link>
+          <div 
+            className="result-section"
+            style={{ backgroundColor: doshaColors[result] }}
+          >
+            <div className="result-icon-large">{doshaIcons[result]}</div>
+            <h3 className="result-title">{result} Dosha Dominant</h3>
+            <p className="result-description">{doshaDescriptions[result]}</p>
+            
+            <div className="dosha-breakdown">
+              <h4>Your Dosha Breakdown:</h4>
+              <div className="dosha-scores">
+                {Object.entries({ Vata: 0, Pitta: 0, Kapha: 0 }).map(([dosha]) => {
+                  const count = Object.values(answers).filter(answer => answer === dosha).length;
+                  const percentage = Math.round((count / questions.length) * 100);
+                  return (
+                    <div key={dosha} className="dosha-score">
+                      <span className="dosha-name">{doshaIcons[dosha]} {dosha}</span>
+                      <div className="score-bar">
+                        <div 
+                          className="score-fill"
+                          style={{ 
+                            width: `${percentage}%`,
+                            backgroundColor: dosha === 'Vata' ? '#00695c' : 
+                                           dosha === 'Pitta' ? '#e65100' : '#4a148c'
+                          }}
+                        ></div>
+                      </div>
+                      <span className="score-percentage">{percentage}%</span>
+                    </div>
+                  );
+                })}
               </div>
+            </div>
+
+            <div className="result-actions">
+              <button
+                onClick={handleRetakeQuiz}
+                className="retake-btn"
+              >
+                🔄 Retake Quiz
+              </button>
+              <Link to="/" className="home-button">
+                🏠 Back to Home
+              </Link>
+              <Link to="/#consultation" className="consult-button">
+                📅 Book Consultation
+              </Link>
             </div>
           </div>
         )}

@@ -1,8 +1,10 @@
 import './App.css';
 import './styles/DoshaQuiz.css';
+import './styles/QuickRemedies.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import DoshaQuiz from './pages/doshiquiz.jsx';
+import QuickRemedies from './pages/QuickRemedies.jsx';
 
 // Navigation Component
 function Navigation() {
@@ -254,7 +256,46 @@ function DoshaQuizSection() {
   );
 }
 
-// Footer Component
+// Quick Remedies Section
+function QuickRemediesSection() {
+  return (
+    <section id="remedies" className="section quick-remedies-section">
+      <div className="container">
+        <h2 className="section-title">Quick Ayurvedic Remedies</h2>
+        <div className="remedies-content">
+          <div className="remedies-intro">
+            <p>Discover instant natural solutions for common health issues using Ayurvedic wisdom and time-tested remedies.</p>
+            <div className="remedies-preview">
+              <div className="remedy-preview-item">
+                <span className="preview-icon">🌿</span>
+                <h4>Natural Solutions</h4>
+                <p>Plant-based remedies for everyday health concerns</p>
+              </div>
+              <div className="remedy-preview-item">
+                <span className="preview-icon">🍽️</span>
+                <h4>Dietary Guidance</h4>
+                <p>Food recommendations to support healing</p>
+              </div>
+              <div className="remedy-preview-item">
+                <span className="preview-icon">⚖️</span>
+                <h4>Dosha Balancing</h4>
+                <p>Restore harmony to your body constitution</p>
+              </div>
+            </div>
+          </div>
+          <div className="remedies-action">
+            <ScrollToTopLink to="/quick-remedies" className="btn-primary remedies-btn">
+              Explore Quick Remedies
+            </ScrollToTopLink>
+            <p className="remedies-note">💡 Get instant solutions for 7+ common health issues</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Footer Component with Quick Remedies link
 function Footer() {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -281,12 +322,22 @@ function Footer() {
               <li><button onClick={() => scrollToSection('herbs')} className="footer-link-btn">Explore Herbs</button></li>
               <li><button onClick={() => scrollToSection('consultation')} className="footer-link-btn">Book Consultation</button></li>
               <li><button onClick={() => scrollToSection('dosha')} className="footer-link-btn">Dosha Quiz</button></li>
+              <li><ScrollToTopLink to="/quick-remedies" className="footer-link-btn">Quick Remedies</ScrollToTopLink></li>
+            </ul>
+          </div>
+          <div className="footer-section">
+            <h4>Resources</h4>
+            <ul>
+              <li><ScrollToTopLink to="/dosha-quiz" className="footer-link-btn">Dosha Assessment</ScrollToTopLink></li>
+              <li><ScrollToTopLink to="/quick-remedies" className="footer-link-btn">Natural Remedies</ScrollToTopLink></li>
+              <li><button onClick={() => scrollToSection('consultation')} className="footer-link-btn">Expert Consultation</button></li>
             </ul>
           </div>
           <div className="footer-section">
             <h4>Contact</h4>
             <p>📧 info@ayurveda.com</p>
             <p>📞 +1 (555) 123-4567</p>
+            <p>🌐 www.ayurveda-wellness.com</p>
           </div>
         </div>
         <div className="footer-bottom">
@@ -307,6 +358,7 @@ function Homepage() {
       <ExploreHerbs />
       <BookConsultation />
       <DoshaQuizSection />
+      <QuickRemediesSection />
       <Footer />
     </div>
   );
@@ -319,6 +371,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/dosha-quiz" element={<DoshaQuiz />} />
+        <Route path="/quick-remedies" element={<QuickRemedies />} />
       </Routes>
     </Router>
   );
