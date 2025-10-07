@@ -179,8 +179,7 @@ html {
 
 /* Hero Banner Styles with Background Image */
 .hero-banner {
-  background: linear-gradient(rgba(139, 195, 74, 0.6), rgba(76, 175, 80, 0.6)), 
-              url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwYtJt3s731Bfer-RFGAgHczAUQjGqvyGTVQ&s');
+  background:url('https://hamc.org.in/images/kalpataru_image.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
