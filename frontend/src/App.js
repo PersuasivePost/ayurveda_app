@@ -1,8 +1,10 @@
 import './App.css';
 import './styles/DoshaQuiz.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import DoshaQuiz from './pages/doshiquiz.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 
 // Navigation Component
 function Navigation() {
@@ -319,6 +321,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/dosha-quiz" element={<DoshaQuiz />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
