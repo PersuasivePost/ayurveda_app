@@ -1,8 +1,8 @@
-"use client"
+
 
 import { type QuizResult, DOSHA_INFO } from "@/lib/quiz"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 
 interface QuizResultsProps {
   result: QuizResult
@@ -96,10 +96,10 @@ export function QuizResults({ result, onRestart }: QuizResultsProps) {
 
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <Link href="/dashboard" className="flex-1">
+        <Link to="/dashboard" className="flex-1">
           <Button className="w-full bg-primary hover:bg-primary/90">View Your Wellness Plan</Button>
         </Link>
-        <Link href="/doctors" className="flex-1">
+        <Link to="/doctors" className="flex-1">
           <Button variant="outline" className="w-full bg-transparent">
             Consult a Specialist
           </Button>

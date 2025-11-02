@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState } from "react"
 import { QUIZ_QUESTIONS, calculateResult, type QuizResult } from "@/lib/quiz"

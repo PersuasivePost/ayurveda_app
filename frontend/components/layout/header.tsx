@@ -1,6 +1,4 @@
-"use client"
-
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Home } from "lucide-react"
 import { useState } from "react"
@@ -13,7 +11,7 @@ export function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition">
+          <Link to="/" className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition">
             <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
               <span className="text-xl">🌿</span>
             </div>
@@ -23,43 +21,43 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <Link
-              href="/"
+              to="/"
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition group"
             >
               <Home size={16} className="group-hover:text-primary transition" />
               <span className="hidden lg:inline">Home</span>
             </Link>
             <Link
-              href="/learn-ayurveda"
+              to="/learn-ayurveda"
               className="text-sm text-muted-foreground hover:text-foreground transition font-medium hover:text-primary"
             >
               Learn Ayurveda
             </Link>
-            <Link href="/quick-remedies" className="text-sm text-muted-foreground hover:text-foreground transition">
+            <Link to="/quick-remedies" className="text-sm text-muted-foreground hover:text-foreground transition">
               Quick Remedies
             </Link>
-            <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition">
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition">
               About
             </Link>
-            <Link href="/doctors" className="text-sm text-muted-foreground hover:text-foreground transition">
+            <Link to="/doctors" className="text-sm text-muted-foreground hover:text-foreground transition">
               Doctors
             </Link>
-            <Link href="/products" className="text-sm text-muted-foreground hover:text-foreground transition">
+            <Link to="/products" className="text-sm text-muted-foreground hover:text-foreground transition">
               Products
             </Link>
-            <Link href="/quiz" className="text-sm text-muted-foreground hover:text-foreground transition">
+            <Link to="/quiz" className="text-sm text-muted-foreground hover:text-foreground transition">
               Body Type Quiz
             </Link>
           </nav>
 
           {/* CTA Buttons */}
           <div className="hidden sm:flex items-center gap-3">
-            <Link href="/login">
+            <Link to="/login">
               <Button variant="ghost" size="sm">
                 Login
               </Button>
             </Link>
-            <Link href="/signup">
+            <Link to="/signup">
               <Button size="sm" className="bg-primary hover:bg-primary/90">
                 Sign Up
               </Button>
@@ -75,35 +73,35 @@ export function Header() {
         {/* Mobile Navigation */}
         {isOpen && (
           <nav className="md:hidden pb-4 space-y-2">
-            <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-sm font-medium">
+            <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-sm font-medium">
               <Home size={16} className="text-primary" />
               Home
             </Link>
-            <Link href="/learn-ayurveda" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm font-medium">
+            <Link to="/learn-ayurveda" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm font-medium">
               Learn Ayurveda
             </Link>
-            <Link href="/quick-remedies" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
+            <Link to="/quick-remedies" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
               Quick Remedies
             </Link>
-            <Link href="/about" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
+            <Link to="/about" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
               About
             </Link>
-            <Link href="/doctors" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
+            <Link to="/doctors" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
               Doctors
             </Link>
-            <Link href="/products" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
+            <Link to="/products" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
               Products
             </Link>
-            <Link href="/quiz" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
+            <Link to="/quiz" className="block px-3 py-2 rounded-lg hover:bg-muted text-sm">
               Body Type Quiz
             </Link>
             <div className="flex gap-2 pt-2">
-              <Link href="/login" className="flex-1">
+              <Link to="/login" className="flex-1">
                 <Button variant="ghost" size="sm" className="w-full">
                   Login
                 </Button>
               </Link>
-              <Link href="/signup" className="flex-1">
+              <Link to="/signup" className="flex-1">
                 <Button size="sm" className="w-full bg-primary hover:bg-primary/90">
                   Sign Up
                 </Button>

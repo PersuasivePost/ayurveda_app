@@ -1,9 +1,9 @@
-"use client"
+
 
 import { useState } from "react"
 import { MapPin, Star, Clock, Phone, MessageCircle, ChevronRight, Search, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 
 interface Doctor {
   id: string
@@ -260,7 +260,7 @@ export function MapFinder() {
                       <MessageCircle size={16} />
                       <span className="hidden sm:inline">Chat</span>
                     </Button>
-                    <Link href={`/booking/${doctor.id}`} onClick={(e) => e.stopPropagation()}>
+                    <Link to={`/booking/${doctor.id}`} onClick={(e) => e.stopPropagation()}>
                       <Button size="sm" className="w-full bg-primary hover:bg-primary/90 gap-2">
                         Book
                         <ChevronRight size={16} />

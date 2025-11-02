@@ -1,4 +1,4 @@
-"use client"
+
 
 import type React from "react"
 
@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 
 interface LoginFormProps {
   onSubmit?: (email: string, password: string) => void
@@ -115,7 +115,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
           <input type="checkbox" className="rounded" />
           <span className="text-muted-foreground">Remember me</span>
         </label>
-        <Link href="/auth/forgot-password" className="text-primary hover:text-primary/90 font-medium">
+        <Link to="/auth/forgot-password" className="text-primary hover:text-primary/90 font-medium">
           Forgot password?
         </Link>
       </div>
@@ -128,7 +128,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
       {/* Sign Up Link */}
       <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{" "}
-        <Link href="/signup" className="text-primary hover:text-primary/90 font-medium">
+        <Link to="/signup" className="text-primary hover:text-primary/90 font-medium">
           Sign up
         </Link>
       </p>

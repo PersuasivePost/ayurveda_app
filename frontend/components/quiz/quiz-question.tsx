@@ -1,4 +1,4 @@
-"use client"
+
 
 import type { QuizQuestion as QuizQuestionType } from "@/lib/quiz"
 

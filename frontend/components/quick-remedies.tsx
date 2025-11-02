@@ -1,7 +1,7 @@
-"use client"
+
 
 import { useState } from "react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 
 interface Remedy {
   symptom: string
@@ -135,7 +135,7 @@ export function QuickRemedies() {
                 </div>
 
                 <div className="pt-4 border-t border-border/30 flex flex-col sm:flex-row gap-4">
-                  <Link href="/doctors" className="flex-1">
+                  <Link to="/doctors" className="flex-1">
                     <button
                       className={`w-full px-6 py-3 rounded-lg bg-${selectedData.color} hover:bg-${selectedData.color}/90 text-${selectedData.color}-foreground font-medium transition-all duration-300 hover:-translate-y-1`}
                     >

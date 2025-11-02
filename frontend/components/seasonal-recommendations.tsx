@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useEffect, useState } from "react"
 import { Leaf, Wind, Cherry, Zap, Moon, Sun } from "lucide-react"

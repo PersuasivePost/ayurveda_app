@@ -1,18 +1,17 @@
-
-
-import Link from "next/link"
+import { Link, useNavigate } from "react-router-dom"
 import { SignUpForm, type SignUpData } from "@/components/forms/signup-form"
 import { useState } from "react"
 
 export default function SignUpPage() {
   const [submitted, setSubmitted] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = (data: SignUpData) => {
     console.log("[v0] Signup attempt:", data.email, "as", data.userType)
     setSubmitted(true)
     // In production: call auth API here
     // For now, redirect to dashboard
-    window.location.href = "/dashboard"
+    navigate("/dashboard")
   }
 
   return (
@@ -20,7 +19,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo & Header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 font-semibold text-lg mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 font-semibold text-lg mb-6">
             <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
               🌿
             </div>
@@ -38,11 +37,11 @@ export default function SignUpPage() {
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground">
           By signing up, you agree to our{" "}
-          <Link href="/terms" className="text-primary hover:text-primary/90">
+          <Link to="/terms" className="text-primary hover:text-primary/90">
             Terms
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-primary hover:text-primary/90">
+          <Link to="/privacy" className="text-primary hover:text-primary/90">
             Privacy Policy
           </Link>
         </p>

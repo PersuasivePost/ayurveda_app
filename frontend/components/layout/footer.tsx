@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { Mail, MapPin, Phone } from "lucide-react"
 
 export function Footer() {
@@ -24,17 +24,17 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground">Platform</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/doctors" className="text-muted-foreground hover:text-foreground transition">
+                <Link to="/doctors" className="text-muted-foreground hover:text-foreground transition">
                   Doctors
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="text-muted-foreground hover:text-foreground transition">
+                <Link to="/products" className="text-muted-foreground hover:text-foreground transition">
                   Products
                 </Link>
               </li>
               <li>
-                <Link href="/quiz" className="text-muted-foreground hover:text-foreground transition">
+                <Link to="/quiz" className="text-muted-foreground hover:text-foreground transition">
                   Body Type Quiz
                 </Link>
               </li>
@@ -46,17 +46,17 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground">Company</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground hover:text-foreground transition">
+                <Link to="/about" className="text-muted-foreground hover:text-foreground transition">
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-muted-foreground hover:text-foreground transition">
+                <Link to="/blog" className="text-muted-foreground hover:text-foreground transition">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-foreground transition">
+                <Link to="/contact" className="text-muted-foreground hover:text-foreground transition">
                   Contact
                 </Link>
               </li>
@@ -71,10 +71,10 @@ export function Footer() {
                 <Mail size={16} /> support@ayurveda.com
               </li>
               <li className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition cursor-pointer">
-                <Phone size={16} /> +1 (800) 123-4567
+                <Phone size={16} /> +91 (800) 123-4567
               </li>
               <li className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition cursor-pointer">
-                <MapPin size={16} /> New York, USA
+                <MapPin size={16} /> Mumbai, India
               </li>
             </ul>
           </div>
@@ -85,13 +85,13 @@ export function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <p>&copy; {currentYear} Ayurvedic Wellness. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-foreground transition">
+              <Link to="/privacy" className="hover:text-foreground transition">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-foreground transition">
+              <Link to="/terms" className="hover:text-foreground transition">
                 Terms of Service
               </Link>
-              <Link href="/cookies" className="hover:text-foreground transition">
+              <Link to="/cookies" className="hover:text-foreground transition">
                 Cookie Policy
               </Link>
             </div>

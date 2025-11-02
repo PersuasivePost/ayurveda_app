@@ -1,4 +1,4 @@
-"use client"
+
 
 import type React from "react"
 
@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 
 interface SignUpFormProps {
   onSubmit?: (data: SignUpData) => void
@@ -251,11 +251,11 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         />
         <span className="text-sm text-muted-foreground">
           I agree to the{" "}
-          <Link href="/terms" className="text-primary hover:text-primary/90 font-medium">
+          <Link to="/terms" className="text-primary hover:text-primary/90 font-medium">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-primary hover:text-primary/90 font-medium">
+          <Link to="/privacy" className="text-primary hover:text-primary/90 font-medium">
             Privacy Policy
           </Link>
         </span>
@@ -275,7 +275,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
       {/* Login Link */}
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary hover:text-primary/90 font-medium">
+        <Link to="/login" className="text-primary hover:text-primary/90 font-medium">
           Sign in
         </Link>
       </p>

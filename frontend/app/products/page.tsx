@@ -1,4 +1,4 @@
-"use client"
+
 
 import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"

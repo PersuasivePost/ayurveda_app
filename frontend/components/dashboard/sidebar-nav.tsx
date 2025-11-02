@@ -1,7 +1,4 @@
-"use client"
-
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "react-router-dom"
 import { LayoutDashboard, User, Calendar, Heart, ShoppingCart, LogOut, Settings } from "lucide-react"
 
 const navItems = [
@@ -14,13 +11,14 @@ const navItems = [
 ]
 
 export function SidebarNav() {
-  const pathname = usePathname()
+  const location = useLocation()
+  const pathname = location.pathname
 
   return (
     <aside className="hidden md:flex w-64 border-r border-border/40 bg-muted/20 flex-col">
       {/* Logo */}
       <div className="p-6 border-b border-border/40">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <Link to="/" className="flex items-center gap-2 font-semibold">
           <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
             🌿
           </div>
@@ -36,7 +34,7 @@ export function SidebarNav() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
                 isActive
                   ? "bg-primary text-primary-foreground font-medium"

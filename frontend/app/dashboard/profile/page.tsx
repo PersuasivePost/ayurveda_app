@@ -1,4 +1,4 @@
-"use client"
+
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"

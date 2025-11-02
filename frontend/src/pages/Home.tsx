@@ -1,8 +1,6 @@
-
-
 import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { useEffect, useRef, useState } from "react"
 import { ChevronRight, Leaf, Users, Package, Apple, Droplet, Flame, MapPin, Clock } from "lucide-react"
 import { QuickRemedies } from "@/components/quick-remedies"
@@ -44,13 +42,13 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Link href="/quiz">
+                  <Link to="/quiz">
                     <Button size="lg" className="bg-primary hover:bg-primary/90 btn-hover-lift w-full sm:w-auto gap-2">
                       Discover Your Body Type
                       <ChevronRight size={18} />
                     </Button>
                   </Link>
-                  <Link href="/doctors">
+                  <Link to="/doctors">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto btn-hover-lift bg-transparent">
                       Find a Doctor
                     </Button>
@@ -261,7 +259,7 @@ export default function Home() {
                     {/* Learn more link */}
                     <div className="pt-2">
                       <Link
-                        href="/quiz"
+                        to="/quiz"
                         className="text-sm font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-2 group/link"
                       >
                         Learn More{" "}
@@ -289,7 +287,7 @@ export default function Home() {
                   seasonal adjustments.
                 </p>
               </div>
-              <Link href="/quiz" className="flex-shrink-0">
+              <Link to="/quiz" className="flex-shrink-0">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 btn-hover-lift whitespace-nowrap gap-2">
                   Start Diet Quiz
                   <ChevronRight size={18} />
@@ -315,7 +313,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5" />
             </div>
 
-            <Link href="/learn-ayurveda" className="relative block space-y-6">
+            <Link to="/learn-ayurveda" className="relative block space-y-6">
               <div className="flex items-start justify-between">
                 <div className="space-y-4 flex-1">
                   <div className="inline-block">
@@ -441,7 +439,7 @@ export default function Home() {
                 wellness roadmap from Ayurvedic experts.
               </p>
               <div className="pt-4">
-                <Link href="/signup">
+                <Link to="/signup">
                   <Button
                     size="lg"
                     className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 btn-hover-lift"
