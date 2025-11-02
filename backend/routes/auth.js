@@ -5,7 +5,7 @@ const User = require("../schema/User");
 
 const router = express.Router();
 
-// handler functions exported so server.js can mount them directly
+// handler functions exported so server.js can mount them directly at /auth
 async function signupHandler(req, res) {
   try {
     const { name, email, password } = req.body;
@@ -62,7 +62,7 @@ async function loginHandler(req, res) {
   }
 }
 
-// Protected route example
+// Protected route example (returns current user)
 async function meHandler(req, res) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ message: "No token" });

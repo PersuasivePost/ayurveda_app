@@ -1,9 +1,20 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-}, { timestamps: true });
+// Patient (user) schema - kept intentionally minimal. New doctor users are
+// stored in a separate `Doctor` model.
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ["patient"], default: "patient" },
+    phone: { type: String },
+    address: { type: String },
+    // lightweight history reference - not strictly required but convenient
+    // for later queries. We'll store appointment references here when created.
+    records: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
