@@ -1,0 +1,129 @@
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+const Product = require("../schema/Product");
+const { requireAdmin } = require("../middleware/adminAuth");
+
+// ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "..", "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const safe = Date.now() + "-" + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    cb(null, safe);
+  },
+});
+const upload = multer({ storage });
+
+const router = express.Router();
+
+// admin login - reads ADMIN_CREDENTIALS env var as JSON array
+router.post("/login", (req, res) => {
+  const adminsRaw = process.env.ADMIN_CREDENTIALS || "[]";
+  let admins = [];
+  try {
+    admins = JSON.parse(adminsRaw);
+  } catch (e) {
+    admins = [];
+  }
+  const { email, password } = req.body;
+  const found = admins.find((a) => a.email === email && a.password === password);
+  if (!found) return res.status(401).json({ message: "Invalid admin credentials" });
+  const token = jwt.sign({ email: found.email, admin: true }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+  res.json({ token, admin: { email: found.email } });
+});
+
+// create a product (admin only)
+// create a product (admin only). Accepts multipart/form-data with optional `image` file.
+router.post("/products", requireAdmin, upload.single("image"), async (req, res) => {
+  try {
+    const { name, price, description, metadata } = req.body;
+    if (!name || price == null) return res.status(400).json({ message: "Missing fields" });
+    const image = req.file ? "/uploads/" + req.file.filename : req.body.image;
+    const product = new Product({ name, price, description, image, metadata });
+    await product.save();
+    res.json({ product });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// list products (admin)
+router.get("/products", requireAdmin, async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.json({ products });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// update product (admin) - accepts multipart/form-data image or JSON body
+router.put("/products/:id", requireAdmin, upload.single("image"), async (req, res) => {
+  try {
+    const updates = {};
+    const { name, price, description, metadata } = req.body;
+    if (name) updates.name = name;
+    if (price != null) updates.price = price;
+    if (description) updates.description = description;
+    if (metadata) updates.metadata = metadata;
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    // handle image replacement
+    if (req.file) {
+      const newPath = "/uploads/" + req.file.filename;
+      // remove old file if it was uploaded to our uploads dir
+      if (product.image && product.image.startsWith("/uploads/")) {
+        const oldFull = path.join(__dirname, "..", product.image);
+        try {
+          if (fs.existsSync(oldFull)) fs.unlinkSync(oldFull);
+        } catch (e) {
+          console.warn("Could not remove old image", oldFull, e.message);
+        }
+      }
+      updates.image = newPath;
+    }
+
+    Object.assign(product, updates);
+    await product.save();
+    res.json({ product });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// delete product (admin)
+router.delete("/products/:id", requireAdmin, async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    // remove image file if present in uploads
+    if (product.image && product.image.startsWith("/uploads/")) {
+      const full = path.join(__dirname, "..", product.image);
+      try {
+        if (fs.existsSync(full)) fs.unlinkSync(full);
+      } catch (e) {
+        console.warn("Could not remove image", full, e.message);
+      }
+    }
+    res.json({ message: "Product deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+module.exports = router;

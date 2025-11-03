@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 const {
   router: authRouter,
   signupHandler,
@@ -9,6 +10,10 @@ const {
 } = require("./routes/auth");
 const doctorsRouter = require("./routes/doctors");
 const appointmentsRouter = require("./routes/appointments");
+const adminRouter = require("./routes/admin");
+const cartRouter = require("./routes/cart");
+const productsRouter = require("./routes/products");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(express.json());
@@ -80,27 +85,15 @@ mongoose
     app.use("/doctors", doctorsRouter);
     app.use("/doctor", doctorsRouter);
     app.use("/appointments", appointmentsRouter);
+  // serve uploaded files (product images) from /uploads
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-    // simple admin login using env-stored credentials. Expect ADMIN_CREDENTIALS
-    // to be a JSON string like: [{"email":"a@x","password":"p"},...]
-    // exposed at /admin/login
-    app.post("/admin/login", (req, res) => {
-      const adminsRaw = process.env.ADMIN_CREDENTIALS || "[]";
-      let admins = [];
-      try {
-        admins = JSON.parse(adminsRaw);
-      } catch (e) {
-        admins = [];
-      }
-      const { email, password } = req.body;
-      const found = admins.find(
-        (a) => a.email === email && a.password === password
-      );
-      if (!found)
-        return res.status(401).json({ message: "Invalid admin credentials" });
-      // return a tiny token-like payload (not JWT) to indicate success
-      res.json({ admin: { email: found.email } });
-    });
+  // public products listing and detail
+  app.use("/products", productsRouter);
+
+    // mount admin and cart routes
+    app.use("/admin", adminRouter);
+    app.use("/cart", cartRouter);
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

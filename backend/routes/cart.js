@@ -1,0 +1,90 @@
+const express = require("express");
+const User = require("../schema/User");
+const Product = require("../schema/Product");
+const Order = require("../schema/Order");
+const { requireAuth } = require("../middleware/auth");
+
+const router = express.Router();
+
+// add item to cart
+router.post("/add", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { productId, quantity } = req.body;
+    if (!productId) return res.status(400).json({ message: "productId required" });
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.cart = user.cart || [];
+    const existing = user.cart.find((c) => String(c.product) === String(productId));
+    if (existing) {
+      existing.quantity = (existing.quantity || 0) + (quantity || 1);
+    } else {
+      user.cart.push({ product: productId, quantity: quantity || 1 });
+    }
+    await user.save();
+    const populated = await User.findById(userId).populate("cart.product");
+    res.json({ cart: populated.cart });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// get current cart
+router.get("/", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("cart.product");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ cart: user.cart || [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// checkout - requires address and phone; can use user's stored address/phone or provide in body
+router.post("/checkout", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("cart.product");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const address = req.body.address || user.address;
+    const phone = req.body.phone || user.phone;
+    if (!address || !phone)
+      return res.status(400).json({ message: "Address and phone are required to place an order" });
+
+    const cart = user.cart || [];
+    if (!cart.length) return res.status(400).json({ message: "Cart is empty" });
+
+    // build items and compute total
+    let total = 0;
+    const items = cart.map((c) => {
+      const p = c.product;
+      const qty = c.quantity || 1;
+      const price = p.price || 0;
+      total += price * qty;
+      return { product: p._id, name: p.name, price, quantity: qty };
+    });
+
+    const order = new Order({ user: user._id, items, address, phone, total });
+    await order.save();
+
+    // clear user's cart
+    user.cart = [];
+    // optionally update user's stored address/phone if provided in body
+    if (req.body.address) user.address = req.body.address;
+    if (req.body.phone) user.phone = req.body.phone;
+    await user.save();
+
+    res.json({ order });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+module.exports = router;

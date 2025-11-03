@@ -10,6 +10,13 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["patient"], default: "patient" },
     phone: { type: String },
     address: { type: String },
+    // cart stores product references and quantities for quick cart operations
+    cart: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        quantity: { type: Number, default: 1 },
+      },
+    ],
     // lightweight history reference - not strictly required but convenient
     // for later queries. We'll store appointment references here when created.
     records: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
