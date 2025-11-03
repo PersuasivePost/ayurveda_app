@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema(
     // lightweight history reference - not strictly required but convenient
     // for later queries. We'll store appointment references here when created.
     records: [{ type: mongoose.Schema.Types.ObjectId, ref: "Appointment" }],
+    // orders placed by the user
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   },
   { timestamps: true }
 );

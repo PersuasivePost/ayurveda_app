@@ -13,6 +13,7 @@ const appointmentsRouter = require("./routes/appointments");
 const adminRouter = require("./routes/admin");
 const cartRouter = require("./routes/cart");
 const productsRouter = require("./routes/products");
+const ordersRouter = require("./routes/orders");
 const jwt = require("jsonwebtoken");
 
 const app = express();
@@ -94,6 +95,7 @@ mongoose
     // mount admin and cart routes
     app.use("/admin", adminRouter);
     app.use("/cart", cartRouter);
+  app.use("/orders", ordersRouter);
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

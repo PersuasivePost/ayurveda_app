@@ -33,7 +33,16 @@ router.post("/login", (req, res) => {
     admins = [];
   }
   const { email, password } = req.body;
-  const found = admins.find((a) => a.email === email && a.password === password);
+  // normalize parsed admin objects and incoming values to avoid failures due to
+  // stray whitespace or formatting differences in .env files.
+  const normAdmins = admins.map((a) => ({
+    email: a && a.email ? String(a.email).trim() : "",
+    password: a && a.password ? String(a.password) : "",
+  }));
+  const inEmail = email ? String(email).trim() : "";
+  const inPass = password ? String(password) : "";
+
+  const found = normAdmins.find((a) => a.email === inEmail && a.password === inPass);
   if (!found) return res.status(401).json({ message: "Invalid admin credentials" });
   const token = jwt.sign({ email: found.email, admin: true }, process.env.JWT_SECRET, {
     expiresIn: "7d",

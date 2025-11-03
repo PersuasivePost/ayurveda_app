@@ -70,11 +70,15 @@ router.post("/checkout", requireAuth, async (req, res) => {
       return { product: p._id, name: p.name, price, quantity: qty };
     });
 
-    const order = new Order({ user: user._id, items, address, phone, total });
-    await order.save();
+  const order = new Order({ user: user._id, items, address, phone, total });
+  await order.save();
 
-    // clear user's cart
-    user.cart = [];
+  // attach order to user's history so it appears on their profile
+  user.orders = user.orders || [];
+  user.orders.push(order._id);
+
+  // clear user's cart
+  user.cart = [];
     // optionally update user's stored address/phone if provided in body
     if (req.body.address) user.address = req.body.address;
     if (req.body.phone) user.phone = req.body.phone;
