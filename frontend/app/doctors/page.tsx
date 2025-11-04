@@ -1,105 +1,42 @@
-
+'use client'
 
 import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MapPin, Star, Clock } from "lucide-react"
-
-// Mock doctors data
-const DOCTORS = [
-  {
-    id: 1,
-    name: "Dr. Rajesh Kumar",
-    specialty: "General Wellness",
-    rating: 4.9,
-    reviews: 128,
-    location: "New York, NY",
-    availability: "Available Today",
-    image: "👨‍⚕️",
-    experience: "15 years",
-    languages: ["English", "Hindi", "Sanskrit"],
-    consultation_fee: 60,
-  },
-  {
-    id: 2,
-    name: "Dr. Meera Patel",
-    specialty: "Skin & Beauty",
-    rating: 4.8,
-    reviews: 95,
-    location: "Los Angeles, CA",
-    availability: "Available Tomorrow",
-    image: "👩‍⚕️",
-    experience: "12 years",
-    languages: ["English", "Gujarati"],
-    consultation_fee: 65,
-  },
-  {
-    id: 3,
-    name: "Dr. Amit Singh",
-    specialty: "Digestive Health",
-    rating: 4.7,
-    reviews: 142,
-    location: "Chicago, IL",
-    availability: "Available Today",
-    image: "👨‍⚕️",
-    experience: "18 years",
-    languages: ["English", "Hindi"],
-    consultation_fee: 70,
-  },
-  {
-    id: 4,
-    name: "Dr. Anjali Gupta",
-    specialty: "Women's Health",
-    rating: 4.9,
-    reviews: 176,
-    location: "San Francisco, CA",
-    availability: "Available Tomorrow",
-    image: "👩‍⚕️",
-    experience: "14 years",
-    languages: ["English", "Hindi", "Bengali"],
-    consultation_fee: 75,
-  },
-  {
-    id: 5,
-    name: "Dr. Vikram Reddy",
-    specialty: "Pain Management",
-    rating: 4.6,
-    reviews: 87,
-    location: "Houston, TX",
-    availability: "Available Today",
-    image: "👨‍⚕️",
-    experience: "16 years",
-    languages: ["English", "Telugu"],
-    consultation_fee: 70,
-  },
-  {
-    id: 6,
-    name: "Dr. Deepika Sharma",
-    specialty: "Mental Wellness",
-    rating: 4.8,
-    reviews: 119,
-    location: "Seattle, WA",
-    availability: "Available Today",
-    image: "👩‍⚕️",
-    experience: "13 years",
-    languages: ["English", "Hindi", "Marathi"],
-    consultation_fee: 65,
-  },
-]
+import { doctorService } from "@/services/doctor.service"
+import type { Doctor } from "@/types/api.types"
 
 export default function Doctors() {
+  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSpecialty, setSelectedSpecialty] = useState("All")
 
-  const specialties = ["All", ...new Set(DOCTORS.map((d) => d.specialty))]
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const data = await doctorService.getAllDoctors()
+        setDoctors(data)
+      } catch (error) {
+        console.error("Failed to fetch doctors:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const filtered = DOCTORS.filter((doctor) => {
+    fetchDoctors()
+  }, [])
+
+  const specialties = ["All", ...new Set(doctors.map((d) => d.speciality).filter(Boolean))]
+
+  const filtered = doctors.filter((doctor) => {
     const matchesSearch =
       doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesSpecialty = selectedSpecialty === "All" || doctor.specialty === selectedSpecialty
+      doctor.speciality?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSpecialty = selectedSpecialty === "All" || doctor.speciality === selectedSpecialty
     return matchesSearch && matchesSpecialty
   })
 
@@ -145,7 +82,11 @@ export default function Doctors() {
       {/* Doctors Grid */}
       <section className="w-full px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="mx-auto max-w-6xl">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">Loading doctors...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">No doctors found matching your criteria</p>
             </div>
@@ -153,41 +94,41 @@ export default function Doctors() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((doctor) => (
                 <div
-                  key={doctor.id}
+                  key={doctor._id}
                   className="rounded-lg border border-border/40 bg-card p-6 hover:shadow-lg transition space-y-4"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between">
-                    <div className="text-4xl">{doctor.image}</div>
+                    <div className="text-4xl">👨‍⚕️</div>
                     <div className="flex items-center gap-1">
                       <Star size={16} className="fill-primary text-primary" />
-                      <span className="font-semibold text-foreground">{doctor.rating}</span>
-                      <span className="text-sm text-muted-foreground">({doctor.reviews})</span>
+                      <span className="font-semibold text-foreground">4.8</span>
+                      <span className="text-sm text-muted-foreground">(verified)</span>
                     </div>
                   </div>
 
                   {/* Info */}
                   <div>
                     <h3 className="font-semibold text-foreground">{doctor.name}</h3>
-                    <p className="text-sm text-primary font-medium">{doctor.specialty}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{doctor.experience} experience</p>
+                    <p className="text-sm text-primary font-medium">{doctor.speciality || "General Practice"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Verified practitioner</p>
                   </div>
 
                   {/* Details */}
                   <div className="space-y-2 border-t border-border/40 pt-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <MapPin size={16} />
-                      {doctor.location}
+                      {doctor.clinicAddress || "Location not specified"}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Clock size={16} />
-                      {doctor.availability}
+                      {doctor.availability && doctor.availability.length > 0 ? "Available" : "Contact for availability"}
                     </div>
-                    <p className="text-sm font-medium text-foreground">₹{doctor.consultation_fee}/consultation</p>
+                    <p className="text-sm font-medium text-foreground">₹{doctor.fee || 500}/consultation</p>
                   </div>
 
                   {/* CTA */}
-                  <Link href={`/booking/${doctor.id}`} className="w-full block">
+                  <Link href={`/booking/${doctor._id}`} className="w-full block">
                     <Button className="w-full bg-primary hover:bg-primary/90">Book Consultation</Button>
                   </Link>
                 </div>

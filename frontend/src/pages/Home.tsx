@@ -5,13 +5,32 @@ import { useEffect, useRef, useState } from "react"
 import { ChevronRight, Leaf, Users, Package, Apple, Droplet, Flame, MapPin, Clock } from "lucide-react"
 import { QuickRemedies } from "@/components/quick-remedies"
 import { MapFinder } from "@/components/map-finder"
+import { doctorService } from "@/services/doctor.service"
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false)
   const heroRef = useRef(null)
+  const [stats, setStats] = useState({
+    totalDoctors: 0,
+    totalPatients: 0,
+    averageRating: 0,
+  })
 
   useEffect(() => {
     setIsVisible(true)
+    
+    // Fetch statistics
+    const fetchStats = async () => {
+      try {
+        const data = await doctorService.getStats()
+        setStats(data)
+      } catch (error) {
+        console.error("Failed to fetch stats:", error)
+        // Keep default values on error
+      }
+    }
+    
+    fetchStats()
   }, [])
 
   return (
@@ -57,15 +76,15 @@ export default function Home() {
 
                 <div className="flex flex-col sm:flex-row gap-6 pt-8 border-t border-border/30">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">500+</p>
+                    <p className="text-sm font-semibold text-foreground">{stats.totalDoctors}+</p>
                     <p className="text-sm text-muted-foreground">Expert Doctors</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">50K+</p>
+                    <p className="text-sm font-semibold text-foreground">{stats.totalPatients}+</p>
                     <p className="text-sm text-muted-foreground">Happy Patients</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">4.9★</p>
+                    <p className="text-sm font-semibold text-foreground">{stats.averageRating}★</p>
                     <p className="text-sm text-muted-foreground">Average Rating</p>
                   </div>
                 </div>

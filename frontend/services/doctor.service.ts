@@ -22,6 +22,20 @@ export const doctorService = {
   },
 
   /**
+   * Get homepage statistics
+   */
+  getStats: async (): Promise<{ totalDoctors: number; totalPatients: number; averageRating: number }> => {
+    try {
+      const response = await apiClient.get<{ totalDoctors: number; totalPatients: number; averageRating: number }>(
+        API_ENDPOINTS.DOCTORS_STATS
+      )
+      return response.data
+    } catch (error) {
+      throw new Error(handleApiError(error))
+    }
+  },
+
+  /**
    * Register a new doctor
    */
   signup: async (data: DoctorSignupRequest): Promise<{ doctor: Doctor }> => {

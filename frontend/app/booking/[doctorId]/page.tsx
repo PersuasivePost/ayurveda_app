@@ -1,33 +1,48 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PageLayout } from "@/components/layout/page-layout"
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react"
+import { doctorService } from "@/services/doctor.service"
+import type { Doctor } from "@/types/api.types"
 
 export default function BookingPage({ params }: { params: { doctorId: string } }) {
   const [step, setStep] = useState<"date" | "time" | "details" | "confirm">("date")
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
   const [reason, setReason] = useState("")
+  const [doctor, setDoctor] = useState<Doctor | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Mock doctor data
-  const doctor = {
-    name: "Dr. Rajesh Kumar",
-    specialty: "General Wellness",
-    experience: "15 years",
-    consultationFee: 60,
-    image: "👨‍⚕️",
-  }
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        // Note: You'll need to add a getDoctorById method to doctorService
+        // For now, fetch all and find the one we need
+        const doctors = await doctorService.getAllDoctors()
+        const foundDoctor = doctors.find(d => d._id === params.doctorId)
+        setDoctor(foundDoctor || null)
+      } catch (error) {
+        console.error("Failed to fetch doctor:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDoctor()
+  }, [params.doctorId])
 
   const availableDates = ["2025-01-15", "2025-01-16", "2025-01-17", "2025-01-20"]
-  const availableTimes = ["10:00 AM", "10:30 AM", "11:00 AM", "2:00 PM", "2:30 PM", "3:00 PM"]
+  const availableTimes = doctor?.availability && doctor.availability.length > 0
+    ? doctor.availability.map(slot => `${slot.day}: ${slot.from} - ${slot.to}`)
+    : ["10:00 AM", "10:30 AM", "11:00 AM", "2:00 PM", "2:30 PM", "3:00 PM"]
 
   const handleNext = () => {
     if (step === "date") setStep("time")
     else if (step === "time") setStep("details")
     else if (step === "details") setStep("confirm")
     else if (step === "confirm") {
-      console.log("[v0] Booking confirmed:", { doctor, selectedDate, selectedTime, reason })
+      console.log("Booking confirmed:", { doctor, selectedDate, selectedTime, reason })
       alert("Booking confirmed! Check your email for details.")
     }
   }
@@ -38,6 +53,26 @@ export default function BookingPage({ params }: { params: { doctorId: string } }
     details: !!reason,
     confirm: true,
   }[step]
+
+  if (loading) {
+    return (
+      <PageLayout>
+        <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <p className="text-muted-foreground">Loading doctor information...</p>
+        </div>
+      </PageLayout>
+    )
+  }
+
+  if (!doctor) {
+    return (
+      <PageLayout>
+        <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <p className="text-muted-foreground">Doctor not found</p>
+        </div>
+      </PageLayout>
+    )
+  }
 
   return (
     <PageLayout>
@@ -68,12 +103,12 @@ export default function BookingPage({ params }: { params: { doctorId: string } }
           {/* Doctor Info Card */}
           <div className="rounded-lg border border-border/40 bg-card p-6 mb-8">
             <div className="flex items-center gap-4">
-              <div className="text-5xl">{doctor.image}</div>
+              <div className="text-5xl">👨‍⚕️</div>
               <div>
                 <h3 className="text-xl font-semibold text-foreground">{doctor.name}</h3>
-                <p className="text-sm text-primary font-medium">{doctor.specialty}</p>
-                <p className="text-sm text-muted-foreground">{doctor.experience} experience</p>
-                <p className="text-lg font-bold text-foreground mt-2">₹{doctor.consultationFee}/session</p>
+                <p className="text-sm text-primary font-medium">{doctor.speciality || "General Practice"}</p>
+                <p className="text-sm text-muted-foreground">{doctor.clinicAddress || "Ayurvedic practitioner"}</p>
+                <p className="text-lg font-bold text-foreground mt-2">₹{doctor.fee || 500}/session</p>
               </div>
             </div>
           </div>
