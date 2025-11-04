@@ -147,8 +147,8 @@ router.post("/create-order/upgrade", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "Already a Pro user" });
     }
 
-    // Define pro tier pricing (you can modify this)
-    const PRO_TIER_PRICE = 999; // ₹999 for example
+  // Define pro tier pricing (₹200 per month)
+  const PRO_TIER_PRICE = 200; // ₹200 per month, amount is rupees
 
     // Create Razorpay order
     const receipt = `upgrade_${user._id}_${Date.now()}`;
@@ -317,14 +317,19 @@ router.post("/verify/upgrade", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "Invalid payment signature" });
     }
 
-    // Update user account type to pro
+    // Update user account type to pro and set expiry for 30 days
     const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
     user.accountType = "pro";
+    user.proPaidAt = now;
+    user.proExpiresAt = expiresAt;
     await user.save();
 
     res.json({
@@ -335,6 +340,7 @@ router.post("/verify/upgrade", requireAuth, async (req, res) => {
         name: user.name,
         email: user.email,
         accountType: user.accountType,
+        proExpiresAt: user.proExpiresAt,
       },
     });
   } catch (error) {

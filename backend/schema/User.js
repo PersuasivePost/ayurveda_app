@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema(
     accountType: { type: String, enum: ["free", "pro"], default: "free" }, //pro users may have extra features later
     phone: { type: String },
     address: { type: String },
+     // for pro subscription management
+     proExpiresAt: { type: Date },
+     proPaidAt: { type: Date },
     // Dosha body type result
     doshaBodyType: {
       type: String,

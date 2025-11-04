@@ -355,7 +355,16 @@ router.get("/diet", requireAuth, async (req, res) => {
     const user = await User.findById(req.user.id).select("accountType doshaBodyType");
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (user.accountType !== "pro") {
+    // check pro status and expiry
+    const now = new Date();
+    if (user.accountType !== "pro" || !user.proExpiresAt || user.proExpiresAt < now) {
+      // if accountType is 'pro' but subscription expired, downgrade automatically
+      if (user.accountType === "pro" && user.proExpiresAt && user.proExpiresAt < now) {
+        user.accountType = "free";
+        user.proExpiresAt = undefined;
+        user.proPaidAt = undefined;
+        await user.save();
+      }
       return res.status(403).json({
         error: "Upgrade required",
         message: "Personalized diet plans are available to Pro users only."
