@@ -4,6 +4,10 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 const Product = require("../schema/Product");
+const User = require("../schema/User");
+const Doctor = require("../schema/Doctor");
+const Appointment = require("../schema/Appointment");
+const Order = require("../schema/Order");
 const { requireAdmin } = require("../middleware/adminAuth");
 
 // ensure uploads directory exists
@@ -48,6 +52,99 @@ router.post("/login", (req, res) => {
     expiresIn: "7d",
   });
   res.json({ token, admin: { email: found.email } });
+});
+
+// Get admin dashboard statistics
+router.get("/stats", requireAdmin, async (req, res) => {
+  try {
+    // Get counts
+    const totalUsers = await User.countDocuments();
+    const totalDoctors = await Doctor.countDocuments();
+    const totalAppointments = await Appointment.countDocuments();
+    const totalProducts = await Product.countDocuments();
+    
+    // Get total orders and revenue
+    const orders = await Order.find();
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    
+    // Get recent appointments (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentAppointments = await Appointment.countDocuments({
+      createdAt: { $gte: thirtyDaysAgo }
+    });
+    
+    // Calculate percentage changes (simplified - comparing with previous period)
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const previousPeriodAppointments = await Appointment.countDocuments({
+      createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
+    });
+    
+    const appointmentChange = previousPeriodAppointments > 0 
+      ? Math.round(((recentAppointments - previousPeriodAppointments) / previousPeriodAppointments) * 100)
+      : 0;
+    
+    // Get recent activity
+    const recentActivities = [];
+    
+    // Recent users
+    const recentUsers = await User.find().sort({ createdAt: -1 }).limit(2).select('name createdAt');
+    recentUsers.forEach(user => {
+      recentActivities.push({
+        action: "New user registered",
+        user: user.name,
+        time: user.createdAt
+      });
+    });
+    
+    // Recent appointments
+    const recentAppts = await Appointment.find()
+      .sort({ createdAt: -1 })
+      .limit(2)
+      .populate('doctor', 'name')
+      .populate('patient', 'name');
+    recentAppts.forEach(appt => {
+      recentActivities.push({
+        action: "New appointment booked",
+        user: appt.doctor?.name || "Unknown Doctor",
+        time: appt.createdAt
+      });
+    });
+    
+    // Recent orders
+    const recentOrders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(2)
+      .populate('user', 'name');
+    recentOrders.forEach(order => {
+      recentActivities.push({
+        action: "Product order placed",
+        user: order.user?.name || "Unknown User",
+        time: order.createdAt
+      });
+    });
+    
+    // Sort all activities by time
+    recentActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
+    
+    res.json({
+      stats: {
+        totalUsers,
+        totalDoctors,
+        totalAppointments,
+        totalProducts,
+        totalOrders,
+        totalRevenue,
+        appointmentChange
+      },
+      recentActivities: recentActivities.slice(0, 5)
+    });
+  } catch (err) {
+    console.error("Error fetching admin stats:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // create a product (admin only)

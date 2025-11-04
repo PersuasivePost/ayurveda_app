@@ -13,6 +13,27 @@ export interface AdminLoginResponse {
   }
 }
 
+export interface AdminStats {
+  totalUsers: number
+  totalDoctors: number
+  totalAppointments: number
+  totalProducts: number
+  totalOrders: number
+  totalRevenue: number
+  appointmentChange: number
+}
+
+export interface RecentActivity {
+  action: string
+  user: string
+  time: string
+}
+
+export interface AdminDashboardData {
+  stats: AdminStats
+  recentActivities: RecentActivity[]
+}
+
 export const adminService = {
   /**
    * Admin login
@@ -20,6 +41,18 @@ export const adminService = {
   login: async (data: AdminLoginRequest): Promise<AdminLoginResponse> => {
     try {
       const response = await apiClient.post<AdminLoginResponse>(API_ENDPOINTS.ADMIN_LOGIN, data)
+      return response.data
+    } catch (error) {
+      throw new Error(handleApiError(error))
+    }
+  },
+
+  /**
+   * Get admin dashboard statistics
+   */
+  getDashboardStats: async (): Promise<AdminDashboardData> => {
+    try {
+      const response = await apiClient.get<AdminDashboardData>(API_ENDPOINTS.ADMIN_STATS)
       return response.data
     } catch (error) {
       throw new Error(handleApiError(error))

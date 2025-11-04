@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   
   // Admin
   ADMIN_LOGIN: '/admin/login',
+  ADMIN_STATS: '/admin/stats',
   
   // Products
   PRODUCTS: '/products',
