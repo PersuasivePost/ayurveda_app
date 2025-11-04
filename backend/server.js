@@ -14,6 +14,7 @@ const adminRouter = require("./routes/admin");
 const cartRouter = require("./routes/cart");
 const productsRouter = require("./routes/products");
 const ordersRouter = require("./routes/orders");
+const doshaRoutes = require("./routes/dosha");
 const jwt = require("jsonwebtoken");
 
 const app = express();
@@ -69,7 +70,7 @@ app.options("*", cors(corsOptions));
 // mount auth routes at /auth
 app.use("/auth", authRouter);
 
-// also expose root-level login/signup for convenience
+// also expose root-level login/signup for convenience (optional)
 app.post("/signup", signupHandler);
 app.post("/login", loginHandler);
 
@@ -81,21 +82,24 @@ mongoose
   })
   .then(() => {
     console.log("Connected to MongoDB");
-    // mount application routes after DB connect
-    // mount doctors routes at both /doctors and /doctor (accept singular from some clients)
+    // mount application routes after DB connect with /api prefix
     app.use("/doctors", doctorsRouter);
     app.use("/doctor", doctorsRouter);
     app.use("/appointments", appointmentsRouter);
-  // serve uploaded files (product images) from /uploads
-  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+    
+    // serve uploaded files (product images) from /uploads
+    app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-  // public products listing and detail
-  app.use("/products", productsRouter);
+    // public products listing and detail
+    app.use("/products", productsRouter);
 
     // mount admin and cart routes
     app.use("/admin", adminRouter);
     app.use("/cart", cartRouter);
-  app.use("/orders", ordersRouter);
+    app.use("/orders", ordersRouter);
+    
+    // mount dosha quiz routes
+    app.use("/dosha", doshaRoutes);
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

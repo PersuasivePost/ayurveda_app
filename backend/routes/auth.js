@@ -83,6 +83,87 @@ async function meHandler(req, res) {
   }
 }
 
+// GET /auth/profile - Get current user's profile (requires authentication)
+router.get("/profile", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select("-password") // Exclude password from response
+      .populate("cart.product", "name price image")
+      .populate("records")
+      .populate("orders");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.role,
+        accountType: user.accountType,
+        doshaBodyType: user.doshaBodyType,
+        doshaScores: user.doshaScores,
+        quizTakenAt: user.quizTakenAt,
+        cart: user.cart,
+        records: user.records,
+        orders: user.orders,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+// PUT /auth/profile - Update user profile (requires authentication)
+router.put("/profile", requireAuth, async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+    if (address) updateData.address = address;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.role,
+        accountType: user.accountType,
+        doshaBodyType: user.doshaBodyType,
+        doshaScores: user.doshaScores,
+        quizTakenAt: user.quizTakenAt
+      }
+    });
+
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 // wire handlers to router for /api/auth routes
 router.post("/signup", signupHandler);
 router.post("/login", loginHandler);
@@ -119,6 +200,24 @@ router.delete("/me", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/auth/upgrade - upgrade current user to pro (protected)
+router.post("/upgrade", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { accountType: "pro" },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({ message: "Upgraded to pro", user: { id: user._id, accountType: user.accountType } });
+  } catch (err) {
+    console.error("Error upgrading user:", err);
+    res.status(500).json({ error: "Failed to upgrade user" });
   }
 });
 
