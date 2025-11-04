@@ -36,7 +36,22 @@ export default function Cart() {
 
     setUpdating(productId)
     try {
-      await cartService.addToCart({ productId, quantity: newQuantity })
+      // Find current quantity in cart
+      const currentItem = cart.find(item => {
+        const product = getProductFromItem(item)
+        return product?._id === productId
+      })
+      
+      if (!currentItem) {
+        setError("Product not found in cart")
+        return
+      }
+
+      const currentQuantity = currentItem.quantity
+      const quantityDelta = newQuantity - currentQuantity
+
+      // Call addToCart with the delta to adjust the quantity
+      await cartService.addToCart({ productId, quantity: quantityDelta })
       await fetchCart()
       window.dispatchEvent(new Event('cartUpdated'))
     } catch (err) {
@@ -49,8 +64,20 @@ export default function Cart() {
   const handleRemoveItem = async (productId: string) => {
     setUpdating(productId)
     try {
-      // Set quantity to 0 to remove item
-      await cartService.addToCart({ productId, quantity: 0 })
+      // Find current quantity in cart
+      const currentItem = cart.find(item => {
+        const product = getProductFromItem(item)
+        return product?._id === productId
+      })
+      
+      if (!currentItem) {
+        setError("Product not found in cart")
+        return
+      }
+
+      const currentQuantity = currentItem.quantity
+      // Send negative quantity to remove the item completely
+      await cartService.addToCart({ productId, quantity: -currentQuantity })
       await fetchCart()
       window.dispatchEvent(new Event('cartUpdated'))
     } catch (err) {

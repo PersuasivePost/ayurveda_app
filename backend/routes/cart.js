@@ -22,8 +22,15 @@ router.post("/add", requireAuth, async (req, res) => {
     const existing = user.cart.find((c) => String(c.product) === String(productId));
     if (existing) {
       existing.quantity = (existing.quantity || 0) + (quantity || 1);
+      // Remove item if quantity becomes 0 or less
+      if (existing.quantity <= 0) {
+        user.cart = user.cart.filter((c) => String(c.product) !== String(productId));
+      }
     } else {
-      user.cart.push({ product: productId, quantity: quantity || 1 });
+      // Only add if quantity is positive
+      if ((quantity || 1) > 0) {
+        user.cart.push({ product: productId, quantity: quantity || 1 });
+      }
     }
     await user.save();
     const populated = await User.findById(userId).populate("cart.product");
