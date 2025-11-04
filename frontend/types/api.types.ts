@@ -11,6 +11,13 @@ export interface User {
   cart?: CartItem[]
   records?: string[]
   orders?: string[]
+  doshaBodyType?: string
+  doshaScores?: {
+    vata: number
+    pitta: number
+    kapha: number
+  }
+  quizTakenAt?: string
 }
 
 export interface Doctor {
@@ -61,7 +68,11 @@ export interface Appointment {
   mode?: 'online' | 'offline'
   fee?: number
   notes?: string
-  status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  status?: 'requested' | 'confirmed' | 'cancelled' | 'completed'
+  razorpay_order_id?: string
+  razorpay_payment_id?: string
+  razorpay_signature?: string
+  payment_status?: 'pending' | 'paid' | 'failed'
   createdAt?: string
   updatedAt?: string
 }
@@ -90,6 +101,15 @@ export interface OrderItem {
 export interface AuthResponse {
   token: string
   user: User
+}
+
+export interface DoctorAuthResponse {
+  token: string
+  doctor: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 export interface DoctorResponse {

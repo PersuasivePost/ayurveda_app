@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { authService } from '@/services/auth.service'
+import { doshaService } from '@/services/dosha.service'
 import type { User } from '@/types/api.types'
 
 export default function DashboardProfile() {
@@ -9,6 +11,8 @@ export default function DashboardProfile() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [doshaResult, setDoshaResult] = useState<any>(null)
+  const [doshaLoading, setDoshaLoading] = useState(false)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -33,6 +37,9 @@ export default function DashboardProfile() {
           password: ''
         })
         setError(null)
+        
+        // Fetch dosha result if available
+        fetchDoshaResult()
       } catch (err) {
         setError('Failed to load profile data. Please try again.')
         console.error('Error fetching user:', err)
@@ -43,6 +50,19 @@ export default function DashboardProfile() {
 
     fetchUserData()
   }, [])
+
+  const fetchDoshaResult = async () => {
+    try {
+      setDoshaLoading(true)
+      const result = await doshaService.getResult()
+      setDoshaResult(result)
+    } catch (err) {
+      // It's okay if dosha result doesn't exist yet
+      console.log('No dosha result found:', err)
+    } finally {
+      setDoshaLoading(false)
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -119,6 +139,66 @@ export default function DashboardProfile() {
         {successMessage && (
           <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4">
             {successMessage}
+          </div>
+        )}
+        
+        {/* Dosha Result Card */}
+        {doshaResult && (
+          <div className="bg-gradient-to-br from-primary/10 to-secondary/10 border border-border rounded-lg p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Your Dosha Constitution</h2>
+                <p className="text-sm text-muted-foreground">
+                  Taken on {new Date(doshaResult.quizTakenAt).toLocaleDateString()}
+                </p>
+              </div>
+              <Link 
+                to="/dosha-quiz"
+                className="text-sm text-primary hover:underline"
+              >
+                Retake Quiz
+              </Link>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="text-3xl font-bold text-primary">
+                {doshaResult.doshaBodyType}
+              </div>
+              <div className="flex-1 grid grid-cols-3 gap-2 text-xs">
+                <div className="space-y-1">
+                  <div className="text-muted-foreground">Vata</div>
+                  <div className="font-semibold">{doshaResult.scores?.vata || 0}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-muted-foreground">Pitta</div>
+                  <div className="font-semibold">{doshaResult.scores?.pitta || 0}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-muted-foreground">Kapha</div>
+                  <div className="font-semibold">{doshaResult.scores?.kapha || 0}</div>
+                </div>
+              </div>
+            </div>
+            
+            {doshaResult.recommendations && (
+              <div className="pt-4 border-t border-border/40">
+                <p className="text-sm text-muted-foreground">
+                  {doshaResult.recommendations.description}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {!doshaLoading && !doshaResult && (
+          <div className="bg-muted/30 border border-border rounded-lg p-6 text-center space-y-3">
+            <p className="text-muted-foreground">You haven't taken the Dosha Quiz yet.</p>
+            <Link 
+              to="/dosha-quiz"
+              className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Take Dosha Quiz
+            </Link>
           </div>
         )}
         

@@ -34,9 +34,11 @@ export default function DoctorLogin() {
       
       // Store the token
       localStorage.setItem(API_CONFIG.TOKEN_KEY, response.token)
+      localStorage.setItem('user_type', 'doctor')
+      localStorage.setItem('temp_email', formData.email)
       
       console.log("Doctor login successful")
-      navigate("/doctor/dashboard")
+      navigate("/")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
       console.error("Doctor login error:", err)

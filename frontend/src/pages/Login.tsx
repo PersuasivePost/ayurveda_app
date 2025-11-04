@@ -28,15 +28,21 @@ export default function LoginPage() {
         // Doctor login
         localStorage.setItem('temp_email', email) // Store email temporarily
         const response = await doctorService.login({ email, password })
-        authLogin(response.token, 'doctor')
+        // Convert doctor response to user format for auth context
+        const doctorAsUser = {
+          id: response.doctor?.id || '',
+          name: response.doctor?.name || '',
+          email: response.doctor?.email || email,
+        }
+        authLogin(response.token, 'doctor', doctorAsUser as any)
         console.log("Doctor login successful")
-        navigate("/doctor/dashboard")
+        navigate("/")
       } else {
         // Patient login
         const response = await authService.login({ email, password })
         authLogin(response.token, userType, response.user)
         console.log("Login successful:", response.user.name)
-        navigate("/dashboard")
+        navigate("/")
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
