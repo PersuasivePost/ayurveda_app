@@ -19,11 +19,27 @@ export default function LoginPage() {
     try {
       if (userType === 'admin') {
         // Admin login
-        localStorage.setItem('temp_email', email) // Store email temporarily
+        console.log("Starting admin login...")
         const response = await adminService.login({ email, password })
-        authLogin(response.token, 'admin')
-        console.log("Admin login successful")
-        navigate("/admin/dashboard")
+        console.log("Admin login response:", response)
+        
+        // Store email BEFORE calling authLogin so it's available in the login function
+        localStorage.setItem('temp_email', email)
+        
+        // Convert admin response to user format for auth context
+        const adminAsUser = {
+          id: 'admin',
+          name: 'Admin',
+          email: response.admin?.email || email,
+        }
+        console.log("Calling authLogin with:", { token: response.token, userType: 'admin', user: adminAsUser })
+        authLogin(response.token, 'admin', adminAsUser as any)
+        console.log("Admin login successful, navigating to dashboard...")
+        
+        // Small delay to ensure state is set
+        setTimeout(() => {
+          navigate("/admin/dashboard", { replace: true })
+        }, 100)
       } else if (userType === 'doctor') {
         // Doctor login
         localStorage.setItem('temp_email', email) // Store email temporarily
