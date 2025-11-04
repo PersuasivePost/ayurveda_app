@@ -1,6 +1,8 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const Doctor = require("../schema/Doctor");
+const User = require("../schema/User");
+const Appointment = require("../schema/Appointment");
 const { requireAuth } = require("../middleware/auth");
 
 const jwt = require("jsonwebtoken");
@@ -73,6 +75,39 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       doctor: { id: doctor._id, name: doctor.name, email: doctor.email },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// get statistics for home page
+router.get("/stats/homepage", async (req, res) => {
+  try {
+    // Count total doctors
+    const totalDoctors = await Doctor.countDocuments();
+    
+    // Count unique patients (users who have appointments)
+    const appointments = await Appointment.distinct("patient");
+    const totalPatients = appointments.length;
+    
+    // Calculate average rating (if you have ratings in Doctor schema)
+    // For now, we'll use a placeholder or calculate from reviews
+    const doctors = await Doctor.find().select("rating");
+    let averageRating = 4.9; // default
+    if (doctors.length > 0) {
+      const doctorsWithRating = doctors.filter(d => d.rating && d.rating > 0);
+      if (doctorsWithRating.length > 0) {
+        const totalRating = doctorsWithRating.reduce((sum, d) => sum + (d.rating || 0), 0);
+        averageRating = (totalRating / doctorsWithRating.length).toFixed(1);
+      }
+    }
+    
+    res.json({
+      totalDoctors,
+      totalPatients,
+      averageRating: parseFloat(averageRating),
     });
   } catch (err) {
     console.error(err);
