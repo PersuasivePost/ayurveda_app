@@ -5,6 +5,7 @@ import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
 import { cartService } from '@/services/cart.service'
 import { isAuthenticated } from '@/lib/api-client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Star, ChevronLeft, ChevronRight, ShoppingCart, AlertCircle } from 'lucide-react'
 
 interface Product {
@@ -47,6 +48,7 @@ export default function ProductDetail() {
   const [currentCartQty, setCurrentCartQty] = useState(0)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [adding, setAdding] = useState(false)
+  const [hasOrdered, setHasOrdered] = useState(false)
   const [reviewPage, setReviewPage] = useState(1)
   const [newReview, setNewReview] = useState({
     rating: 5,
@@ -62,10 +64,70 @@ export default function ProductDetail() {
     fetchReviews()
     fetchCartQuantity()
 
-    const onCartUpdated = () => fetchCartQuantity()
+    // check whether user ordered this product (used to gate review submission)
+    fetchHasOrdered()
+
+    const onCartUpdated = () => {
+      fetchCartQuantity()
+      fetchHasOrdered()
+    }
     window.addEventListener('cartUpdated', onCartUpdated)
     return () => window.removeEventListener('cartUpdated', onCartUpdated)
   }, [id])
+
+  const { user } = useAuth()
+
+  const deleteReview = async (reviewId: string) => {
+    if (!isAuthenticated()) {
+      alert('Please login to delete your review')
+      return
+    }
+    if (!confirm('Are you sure you want to delete your review?')) return
+    try {
+      const token = localStorage.getItem('ayurveda_auth_token')
+      const res = await fetch(`${API_CONFIG.BASE_URL}/reviews/${id}/${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!res.ok) throw new Error('Failed to delete review')
+      alert('Review deleted')
+      fetchReviews()
+    } catch (err) {
+      console.error('Delete review failed', err)
+      alert('Failed to delete review')
+    }
+  }
+
+  // check if current user has ordered this product
+  const fetchHasOrdered = async () => {
+    if (!id) return
+    try {
+      const token = localStorage.getItem('ayurveda_auth_token')
+      if (!token) {
+        setHasOrdered(false)
+        return
+      }
+      const res = await fetch(`${API_CONFIG.BASE_URL}/orders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) {
+        setHasOrdered(false)
+        return
+      }
+      const data = await res.json()
+      const orders = data.orders || []
+      const found = orders.some((o: any) => (o.items || []).some((it: any) => {
+        const pid = it.product && it.product._id ? it.product._id : it.product
+        return String(pid) === String(id)
+      }))
+      setHasOrdered(found)
+    } catch (err) {
+      console.error('Failed to check orders', err)
+      setHasOrdered(false)
+    }
+  }
 
   const fetchCartQuantity = async () => {
     if (!id) return
@@ -453,58 +515,68 @@ export default function ProductDetail() {
           <div className="space-y-8">
             <h2 className="text-2xl font-bold">Customer Reviews</h2>
 
-            {/* Add Review Form */}
-            {isAuthenticated() && (
-              <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-                <h3 className="font-semibold text-lg">Write a Review</h3>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">Rating</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setNewReview({ ...newReview, rating: star })}
-                        className="p-1 transition-transform hover:scale-110"
-                      >
-                        <Star
-                          size={28}
-                          className={star <= newReview.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}
-                        />
-                      </button>
-                    ))}
+            {/* Add Review Form: only allow if logged in AND user has ordered this product */}
+            {isAuthenticated() ? (
+              hasOrdered ? (
+                <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+                  <h3 className="font-semibold text-lg">Write a Review</h3>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Rating</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setNewReview({ ...newReview, rating: star })}
+                          className="p-1 transition-transform hover:scale-110"
+                        >
+                          <Star
+                            size={28}
+                            className={star <= newReview.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Title</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Great product!"
-                    value={newReview.title}
-                    onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Title</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Great product!"
+                      value={newReview.title}
+                      onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Comment</label>
-                  <textarea
-                    placeholder="Share your experience with this product..."
-                    value={newReview.comment}
-                    onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Comment</label>
+                    <textarea
+                      placeholder="Share your experience with this product..."
+                      value={newReview.comment}
+                      onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                    />
+                  </div>
 
-                <Button
-                  onClick={handleSubmitReview}
-                  disabled={submittingReview}
-                  className="w-full"
-                >
-                  {submittingReview ? 'Submitting...' : 'Submit Review'}
-                </Button>
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={submittingReview}
+                    className="w-full"
+                  >
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <p className="text-sm text-muted-foreground">You can submit a review for this product only after purchasing it.</p>
+                </div>
+              )
+            ) : (
+              <div className="bg-card border border-border rounded-lg p-6">
+                <p className="text-sm text-muted-foreground">Please login to submit a review.</p>
               </div>
             )}
 
@@ -524,8 +596,21 @@ export default function ProductDetail() {
                             {review.verified && <span className="ml-2 px-2 py-1 bg-green-50 text-green-700 text-xs rounded">Verified Purchase</span>}
                           </p>
                         </div>
+
+                        {/* Show delete button only to the review author */}
+                        {user && review.userId && String(user.id) === String(review.userId) && (
+                          <div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteReview(review._id)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      
+
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex gap-0.5">
                           {[...Array(5)].map((_, i) => (
@@ -540,7 +625,7 @@ export default function ProductDetail() {
                           {new Date(review.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      
+
                       <p className="text-muted-foreground">{review.comment}</p>
                     </div>
                   ))}

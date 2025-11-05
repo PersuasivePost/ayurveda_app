@@ -28,11 +28,14 @@ router.post("/:productId", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Check if user has purchased this product (optional but recommended)
     const order = await Order.findOne({
       user: userId,
       "items.product": productId,
     });
+
+    if (!order) {
+      return res.status(403).json({ message: "Only customers who purchased this product can submit reviews" });
+    }
 
     const user = await User.findById(userId);
 
@@ -43,7 +46,7 @@ router.post("/:productId", requireAuth, async (req, res) => {
       rating: parseInt(rating),
       title,
       comment,
-      verified: !!order, // mark as verified if user has purchased
+      verified: true, // purchaser verified
     };
 
     // Check if user already reviewed this product

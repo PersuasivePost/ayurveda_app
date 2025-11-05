@@ -9,8 +9,10 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: { type: String, enum: ["patient"], default: "patient" },
     accountType: { type: String, enum: ["free", "pro"], default: "free" }, //pro users may have extra features later
-    phone: { type: String },
-    address: { type: String },
+  // Keep defaults empty for new users; require the fields to exist (empty string by default)
+  // Note: checkout flow enforces non-empty values before placing an order.
+  phone: { type: String, required: true, default: '' },
+  address: { type: String, required: true, default: '' },
      // for pro subscription management
      proExpiresAt: { type: Date },
      proPaidAt: { type: Date },

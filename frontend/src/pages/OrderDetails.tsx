@@ -105,7 +105,8 @@ export default function OrderDetails() {
   }
 
   const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const shipping = 50 // Default shipping cost
+  // Derive shipping from saved order total to ensure consistency with backend
+  const shipping = Math.max(0, (order.total || 0) - subtotal)
   const tax = subtotal * 0.18 // 18% GST
 
   return (

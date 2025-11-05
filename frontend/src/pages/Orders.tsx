@@ -1,6 +1,7 @@
 import { PageLayout } from "@/components/layout/page-layout"
 import { useState, useEffect } from "react"
 import { orderService } from "@/services/order.service"
+import { API_CONFIG } from '@/config/api.config'
 import { useNavigate } from "react-router-dom"
 import type { Order } from "@/types/api.types"
 import { Package, Calendar, MapPin, Phone } from "lucide-react"
@@ -142,29 +143,36 @@ export default function Orders() {
                   <div>
                     <div className="text-sm font-semibold mb-3">Items ({order.items.length})</div>
                     <div className="space-y-3">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex gap-3 items-center">
-                          <div className="w-16 h-16 flex-shrink-0 bg-muted rounded-md flex items-center justify-center overflow-hidden">
-                            {typeof item.product === 'object' && (item.product as any).image ? (
-                              <img 
-                                src={(item.product as any).image} 
-                                alt={item.name} 
-                                className="w-full h-full object-cover" 
-                              />
-                            ) : (
-                              <span className="text-2xl">🌿</span>
-                            )}
+                      {order.items.map((item, idx) => {
+                        const prod = typeof item.product === 'object' ? (item.product as any) : null
+                        const prodId = prod && prod._id ? prod._id : item.product
+                        // image may be stored as relative path on backend; prefix with BASE_URL when needed
+                        const imgSrc = prod && prod.image ? (prod.image.startsWith('http') ? prod.image : `${API_CONFIG.BASE_URL}${prod.image}`) : null
+
+                        return (
+                          <div
+                            key={idx}
+                            className="flex gap-3 items-center cursor-pointer"
+                            onClick={() => prodId && navigate(`/products/${prodId}`)}
+                          >
+                            <div className="w-16 h-16 flex-shrink-0 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                              {imgSrc ? (
+                                <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-2xl">🌿</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm">{item.name}</h4>
+                              <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold">₹{item.price.toFixed(2)}</div>
+                              <div className="text-xs text-muted-foreground">each</div>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm">{item.name}</h4>
-                            <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold">₹{item.price.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground">each</div>
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
 

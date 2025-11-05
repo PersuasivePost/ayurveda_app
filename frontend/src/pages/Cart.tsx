@@ -109,10 +109,18 @@ export default function Cart() {
     setError(null) // Clear previous errors
     try {
       console.log("Step 1: Creating order...")
-      // Step 1: Create order in backend
+      // Ensure user has provided phone and address before creating order
+      if (!user || !user.phone || !user.address) {
+        setCheckingOut(false)
+        alert('Please add your phone number and delivery address in your profile before placing an order.')
+        navigate('/dashboard/profile')
+        return
+      }
+
+      // Step 1: Create order in backend using user's stored address/phone
       const order = await cartService.checkout({
-        address: "Default address",
-        phone: "1234567890"
+        address: user.address,
+        phone: user.phone,
       })
       console.log("Order created:", order._id)
       
@@ -133,7 +141,7 @@ export default function Cart() {
         {
           name: user?.name,
           email: user?.email,
-          phone: "1234567890",
+          phone: user?.phone,
         },
         async (response: RazorpayResponse) => {
           // Step 4: Verify payment on backend
@@ -190,7 +198,7 @@ export default function Cart() {
     return sum + (product?.price || 0) * item.quantity
   }, 0)
 
-  const shipping = subtotal > 500 ? 0 : 50
+  const shipping = subtotal > 499 ? 0 : 50
   const total = subtotal + shipping
 
   return (

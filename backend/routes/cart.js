@@ -202,12 +202,15 @@ router.post("/checkout", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "Cart has no valid items" });
     }
 
+    // Calculate shipping: free for orders over ₹499, otherwise ₹50
+    const shipping = total > 499 ? 0 : 50;
+
     const order = new Order({ 
       user: user._id, 
       items, 
       address, 
       phone, 
-      total,
+      total: total + shipping,
       payment_status: "pending", // Payment is pending initially
     });
     await order.save();
@@ -224,9 +227,11 @@ router.post("/checkout", requireAuth, async (req, res) => {
     if (req.body.phone) user.phone = req.body.phone;
     await user.save();
 
-    // Return the order - frontend will initiate payment using the orderId
+    // Return the order along with shipping so frontend can show breakdown
     res.json({ 
       order,
+      shipping,
+      subtotal: total,
       message: "Order created. Please complete payment to confirm.",
     });
   } catch (err) {
