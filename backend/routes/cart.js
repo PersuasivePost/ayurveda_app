@@ -20,16 +20,26 @@ router.post("/add", requireAuth, async (req, res) => {
 
     user.cart = user.cart || [];
     const existing = user.cart.find((c) => String(c.product) === String(productId));
-    
-    // If quantity is 0, remove the item
-    if (quantity === 0) {
+
+    // Normalize quantity to a number when provided
+    const qty = typeof quantity === 'number' ? quantity : (quantity ? Number(quantity) : undefined);
+
+    // If quantity is explicitly 0, remove the item
+    if (qty === 0) {
       user.cart = user.cart.filter((c) => String(c.product) !== String(productId));
     } else if (existing) {
-      // Set quantity directly (not add to it)
-      existing.quantity = quantity || 1;
+      // When an existing item is present, treat the provided quantity as a delta to add/remove
+      // (positive to increase, negative to decrease). If qty is undefined, default to +1.
+      const delta = (typeof qty === 'number') ? qty : 1;
+      existing.quantity = (existing.quantity || 0) + delta;
+      // remove if quantity drops to 0 or less
+      if (existing.quantity <= 0) {
+        user.cart = user.cart.filter((c) => String(c.product) !== String(productId));
+      }
     } else {
-      // Add new item
-      user.cart.push({ product: productId, quantity: quantity || 1 });
+      // Add new item - only add if qty is positive, default to 1
+      const initial = (typeof qty === 'number' && qty > 0) ? qty : 1;
+      user.cart.push({ product: productId, quantity: initial });
     }
     
     await user.save();

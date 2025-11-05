@@ -7,13 +7,14 @@ import { cartService } from "@/services/cart.service"
 import type { Product } from "@/types/api.types"
 import { isAuthenticated } from "@/lib/api-client"
 import { useNavigate } from "react-router-dom"
-import { Star } from "lucide-react"
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const [cartMap, setCartMap] = useState<Record<string, number>>({})
+  const [qtyMap, setQtyMap] = useState<Record<string, number>>({})
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -30,9 +31,38 @@ export default function Products() {
     }
 
     fetchProducts()
+    fetchCart()
+
+    // refresh cart map when cartUpdated events are dispatched
+    const onCartUpdated = () => fetchCart()
+    window.addEventListener('cartUpdated', onCartUpdated)
+    return () => window.removeEventListener('cartUpdated', onCartUpdated)
   }, [])
 
-  const handleAddToCart = async (productId: string) => {
+  const fetchCart = async () => {
+    try {
+      const items = await cartService.getCart()
+      const map: Record<string, number> = {}
+      items.forEach((it: any) => {
+        const prod = typeof it.product === 'object' ? it.product : null
+        const id = prod?._id || (typeof it.product === 'string' ? it.product : null)
+        if (id) map[id] = it.quantity || 0
+      })
+      setCartMap(map)
+      // initialize qtyMap for products shown - keep existing qty if set
+      setQtyMap((prev) => {
+        const next = { ...prev }
+        Object.keys(map).forEach((id) => {
+          if (!next[id]) next[id] = map[id] || 1
+        })
+        return next
+      })
+    } catch (err) {
+      console.error('Failed to fetch cart for products page', err)
+    }
+  }
+
+  const handleAddToCart = async (productId: string, qty?: number) => {
     if (!isAuthenticated()) {
       navigate("/login")
       return
@@ -40,15 +70,20 @@ export default function Products() {
 
     setAddingToCart(productId)
     try {
-      await cartService.addToCart({ productId, quantity: 1 })
+      const toAdd = typeof qty === 'number' && qty > 0 ? qty : 1
+      await cartService.addToCart({ productId, quantity: toAdd })
+      // Update local cart map immediately for quicker feedback
+      setCartMap((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + toAdd }))
+      setQtyMap((prev) => ({ ...prev, [productId]: 1 }))
+
       // Show success message
       const productName = products.find(p => p._id === productId)?.name || 'Product'
       setError(null)
       // Use a temporary success state
-      const successMsg = `✓ ${productName} added to cart!`
+      const successMsg = `✓ Added ${toAdd} x ${productName} to cart!`
       setError(successMsg)
       setTimeout(() => setError(null), 3000)
-      
+
       // Trigger cart refresh in header by dispatching custom event
       window.dispatchEvent(new Event('cartUpdated'))
     } catch (err) {
@@ -90,33 +125,85 @@ export default function Products() {
           {!loading && !error && products.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((product) => (
-                <div key={product._id} className="bg-card border border-border rounded-lg p-6 space-y-4 hover:shadow-lg transition-shadow cursor-pointer group" onClick={() => navigate(`/products/${product._id}`)}>
-                  <div className="w-full h-40 bg-muted rounded-md flex items-center justify-center text-4xl overflow-hidden">
+                <div
+                  key={product._id}
+                  className="bg-card border border-border rounded-lg overflow-hidden group hover:shadow-lg transform hover:-translate-y-1 transition-all cursor-pointer"
+                  onClick={() => navigate(`/products/${product._id}`)}
+                >
+                  {/* Image */}
+                  <div className="relative h-48 bg-muted overflow-hidden">
                     {product.image ? (
-                        (() => {
-                          const src = product.image.startsWith('http') ? product.image : `${API_CONFIG.BASE_URL}${product.image}`;
-                          return <img src={src} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />;
-                        })()
+                      <img
+                        src={product.image.startsWith('http') ? product.image : `${API_CONFIG.BASE_URL}${product.image}`}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
                     ) : (
-                      "🌿"
+                      <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>
                     )}
+                    {/* Quick view overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <div className="text-white">
+                        <h4 className="font-semibold text-sm truncate max-w-xs">{product.name}</h4>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{product.name}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{product.description || "Ayurvedic product"}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-primary">₹{product.price}</span>
-                    <Button 
-                      size="sm" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product._id);
-                      }}
-                      disabled={addingToCart === product._id}
-                    >
-                      {addingToCart === product._id ? "Adding..." : "Add to Cart"}
-                    </Button>
+
+                  {/* Body */}
+                  <div className="p-4 flex flex-col gap-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground text-base line-clamp-2">{product.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description || 'Ayurvedic product'}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-primary">₹{product.price}</span>
+                        {cartMap[product._id] > 0 && (
+                          <div className="text-xs bg-primary text-white px-2 py-1 rounded">In cart: {cartMap[product._id]}</div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setQtyMap((prev) => ({ ...prev, [product._id]: Math.max(1, (prev[product._id] || 1) - 1) }))}
+                            className="px-3 py-1 bg-muted hover:bg-muted/80"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            value={qtyMap[product._id] || 1}
+                            onChange={(e) => {
+                              const v = Math.max(1, parseInt(e.target.value || '1') || 1)
+                              setQtyMap((prev) => ({ ...prev, [product._id]: v }))
+                            }}
+                            className="w-16 text-center py-1 bg-transparent outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setQtyMap((prev) => ({ ...prev, [product._id]: (prev[product._id] || 1) + 1 }))}
+                            className="px-3 py-1 bg-muted hover:bg-muted/80"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const qty = qtyMap[product._id] || 1
+                            handleAddToCart(product._id, qty)
+                          }}
+                          disabled={addingToCart === product._id}
+                        >
+                          {addingToCart === product._id ? 'Adding...' : 'Add'}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -44,6 +44,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [currentCartQty, setCurrentCartQty] = useState(0)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [adding, setAdding] = useState(false)
   const [reviewPage, setReviewPage] = useState(1)
@@ -59,7 +60,29 @@ export default function ProductDetail() {
   useEffect(() => {
     fetchProductDetail()
     fetchReviews()
+    fetchCartQuantity()
+
+    const onCartUpdated = () => fetchCartQuantity()
+    window.addEventListener('cartUpdated', onCartUpdated)
+    return () => window.removeEventListener('cartUpdated', onCartUpdated)
   }, [id])
+
+  const fetchCartQuantity = async () => {
+    if (!id) return
+    try {
+      const cart = await cartService.getCart()
+      const item = cart.find((c: any) => {
+        const prod = typeof c.product === 'object' ? c.product : null
+        return (prod && prod._id === id) || (typeof c.product === 'string' && c.product === id)
+      })
+      const qty = item ? item.quantity || 0 : 0
+      setCurrentCartQty(qty)
+      // Initialize selector to current cart qty or 1
+      setQuantity(qty > 0 ? qty : 1)
+    } catch (err) {
+      console.error('Failed to fetch cart quantity', err)
+    }
+  }
 
   // Keyboard navigation for modal
   useEffect(() => {
@@ -117,10 +140,20 @@ export default function ProductDetail() {
 
     setAdding(true)
     try {
-      await cartService.addToCart({ productId: id!, quantity })
-      alert(`✓ Added ${quantity} ${product?.name} to cart!`)
-      setQuantity(1)
-      window.dispatchEvent(new Event('cartUpdated'))
+      // Calculate delta between desired quantity and current cart quantity
+      const desired = quantity
+      const delta = desired - (currentCartQty || 0)
+
+      if (delta === 0) {
+        alert('Quantity unchanged')
+      } else {
+        await cartService.addToCart({ productId: id!, quantity: delta })
+        const newQty = (currentCartQty || 0) + delta
+        setCurrentCartQty(newQty > 0 ? newQty : 0)
+        setQuantity(newQty > 0 ? newQty : 1)
+        alert(`✓ Cart updated: ${newQty} ${product?.name}`)
+        window.dispatchEvent(new Event('cartUpdated'))
+      }
     } catch (err) {
       alert('Failed to add to cart')
       console.error(err)
