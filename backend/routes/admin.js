@@ -152,9 +152,26 @@ router.get("/stats", requireAdmin, async (req, res) => {
 // create a product (admin only). Accepts multipart/form-data with optional `image` file.
 router.post("/products", requireAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { name, price, description, metadata } = req.body;
+    const { 
+      name, 
+      price, 
+      description, 
+      longDescription,
+      category,
+      stock,
+      usage,
+      benefits,
+      ingredients,
+      tags,
+      metadata 
+    } = req.body;
+    
     if (!name || price == null) return res.status(400).json({ message: "Missing fields" });
+    
     let image = req.body.image;
+    const images = [];
+
+    // Handle main image
     if (req.file) {
       try {
         console.log(`[ADMIN] Processing product image upload: ${req.file.path}`);
@@ -163,12 +180,14 @@ router.post("/products", requireAdmin, upload.single("image"), async (req, res) 
         const key = `products/${Date.now()}-${req.file.filename}`;
         console.log(`[ADMIN] Calling uploadBuffer with key: ${key}`);
         image = await uploadBuffer(buffer, key, req.file.mimetype);
+        images.push(image);
         console.log(`[ADMIN] uploadBuffer returned URL: ${image}`);
       } catch (e) {
         console.error("[ADMIN] Backblaze upload failed:", e.message);
         console.error("[ADMIN] Full error:", e);
         // fallback to local path if upload fails
         image = "/uploads/" + req.file.filename;
+        images.push(image);
       } finally {
         // remove the local copy if exists
         try {
@@ -181,7 +200,26 @@ router.post("/products", requireAdmin, upload.single("image"), async (req, res) 
         }
       }
     }
-    const product = new Product({ name, price, description, image, metadata });
+
+    const product = new Product({ 
+      name, 
+      price, 
+      description, 
+      longDescription: longDescription || description,
+      category: category || 'General',
+      stock: stock ? parseInt(stock) : 100,
+      usage: usage || '',
+      image, 
+      images,
+      benefits: benefits ? JSON.parse(benefits) : [],
+      ingredients: ingredients ? JSON.parse(ingredients) : [],
+      tags: tags ? JSON.parse(tags) : [],
+      avgRating: 0,
+      reviewCount: 0,
+      reviews: [],
+      metadata 
+    });
+    
     await product.save();
     res.json({ product });
   } catch (err) {

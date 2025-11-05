@@ -12,6 +12,7 @@ import FindDoctors from './pages/FindDoctors'
 import Doctors from './pages/Doctors'
 import BookingPage from './pages/BookingPage'
 import Products from './pages/Products'
+import ProductDetail from './pages/ProductDetail'
 import LearnAyurveda from './pages/LearnAyurveda'
 import QuickRemedies from './pages/QuickRemedies'
 import Quiz from './pages/Quiz'
@@ -53,6 +54,7 @@ function App() {
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/booking/:doctorId" element={<BookingPage />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/learn-ayurveda" element={<LearnAyurveda />} />
           <Route path="/quick-remedies" element={<QuickRemedies />} />
           <Route path="/quiz" element={<Quiz />} />

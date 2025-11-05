@@ -16,6 +16,7 @@ const productsRouter = require("./routes/products");
 const ordersRouter = require("./routes/orders");
 const doshaRoutes = require("./routes/dosha");
 const paymentRouter = require("./routes/payment");
+const reviewsRouter = require("./routes/reviews");
 const jwt = require("jsonwebtoken");
 
 const app = express();
@@ -115,8 +116,9 @@ mongoose
     
     // mount dosha quiz routes
     app.use("/dosha", doshaRoutes);
-  app.use("/orders", ordersRouter);
-  app.use("/payment", paymentRouter);
+    app.use("/orders", ordersRouter);
+    app.use("/payment", paymentRouter);
+    app.use("/reviews", reviewsRouter);
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
