@@ -36,6 +36,7 @@ import AdminUsers from './pages/AdminUsers'
 import AdminContent from './pages/AdminContent'
 import AdminProducts from './pages/AdminProducts'
 import AdminProductAdd from './pages/AdminProductAdd'
+import AdminProductEdit from './pages/AdminProductEdit'
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
           <Route path="/admin/content" element={<ProtectedRoute requiredUserType="admin"><AdminContent /></ProtectedRoute>} />
           <Route path="/admin/products" element={<ProtectedRoute requiredUserType="admin"><AdminProducts /></ProtectedRoute>} />
           <Route path="/admin/products/add" element={<ProtectedRoute requiredUserType="admin"><AdminProductAdd /></ProtectedRoute>} />
+          <Route path="/admin/products/edit/:id" element={<ProtectedRoute requiredUserType="admin"><AdminProductEdit /></ProtectedRoute>} />
         </Routes>
       </Router>
       </AuthProvider>

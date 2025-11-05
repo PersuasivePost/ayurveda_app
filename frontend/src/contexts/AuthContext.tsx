@@ -30,11 +30,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           if (storedUserType === 'patient') {
             // Try to fetch current user for patients
-            const userData = await authService.getCurrentUser()
-            setUser(userData)
-            setUserType('patient')
+            try {
+              const userData = await authService.getCurrentUser()
+              setUser(userData)
+              setUserType('patient')
+            } catch (error) {
+              // If we can't fetch user data but have a valid token, keep the user logged in
+              // and create a temporary user object
+              console.warn('Could not fetch patient data, but token exists. Staying logged in.')
+              setUserType('patient')
+              setUser({
+                id: token.substring(0, 10),
+                name: 'Patient',
+                email: localStorage.getItem('temp_email') || '',
+                phone: '',
+              } as any)
+            }
           } else {
-            // For admin/doctor, just set the userType
+            // For admin/doctor, just set the userType (don't try to fetch)
             setUserType(storedUserType)
             // Set a minimal user object
             setUser({
@@ -45,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } as any)
           }
         } catch (error) {
-          // Token is invalid or expired
+          // Token is invalid or expired - only clear if we're sure
           console.error('Auth check failed:', error)
           localStorage.removeItem(API_CONFIG.TOKEN_KEY)
           localStorage.removeItem('user_type')

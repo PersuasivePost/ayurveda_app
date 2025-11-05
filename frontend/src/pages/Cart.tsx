@@ -1,6 +1,7 @@
 import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { API_CONFIG } from '@/config/api.config'
 import { cartService } from "@/services/cart.service"
 import { useNavigate } from "react-router-dom"
 import type { CartItem, Product } from "@/types/api.types"
@@ -180,7 +181,11 @@ export default function Cart() {
                         {/* Product Image */}
                         <div className="w-24 h-24 flex-shrink-0 bg-muted rounded-md flex items-center justify-center overflow-hidden">
                           {product.image ? (
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                            <img
+                              src={product.image.startsWith('http') ? product.image : `${API_CONFIG.BASE_URL}${product.image}`}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <span className="text-3xl">🌿</span>
                           )}

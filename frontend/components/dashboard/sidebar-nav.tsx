@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, User, Calendar, Heart, ShoppingCart, LogOut, Settings } from "lucide-react"
+import { LayoutDashboard, User, Calendar, Heart, ShoppingCart, LogOut, Settings, Users, FileText, Box } from "lucide-react"
+import { useAuth } from '@/contexts/AuthContext'
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -10,9 +11,20 @@ const navItems = [
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
+const adminNavItems = [
+  { label: "Admin Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Content", href: "/admin/content", icon: FileText },
+  { label: "Products", href: "/admin/products", icon: Box },
+  { label: "Add Product", href: "/admin/products/add", icon: Box },
+]
+
 export function SidebarNav() {
+  const { userType, logout } = useAuth()
   const location = useLocation()
   const pathname = location.pathname
+
+  const itemsToRender = userType === 'admin' ? adminNavItems : navItems
 
   return (
     <aside className="hidden md:flex w-64 border-r border-border/40 bg-muted/20 flex-col">
@@ -28,7 +40,7 @@ export function SidebarNav() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
+        {itemsToRender.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           return (
@@ -50,7 +62,7 @@ export function SidebarNav() {
 
       {/* Logout */}
       <div className="p-4 border-t border-border/40">
-        <button className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition">
+        <button onClick={logout} className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition">
           <LogOut size={20} />
           <span className="text-sm">Log Out</span>
         </button>

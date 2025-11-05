@@ -1,6 +1,7 @@
 import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { API_CONFIG } from "@/config/api.config"
 import { productService } from "@/services/product.service"
 import { cartService } from "@/services/cart.service"
 import type { Product } from "@/types/api.types"
@@ -91,7 +92,10 @@ export default function Products() {
                 <div key={product._id} className="bg-card border border-border rounded-lg p-6 space-y-4">
                   <div className="w-full h-40 bg-muted rounded-md flex items-center justify-center text-4xl overflow-hidden">
                     {product.image ? (
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        (() => {
+                          const src = product.image.startsWith('http') ? product.image : `${API_CONFIG.BASE_URL}${product.image}`;
+                          return <img src={src} alt={product.name} className="w-full h-full object-cover" />;
+                        })()
                     ) : (
                       "🌿"
                     )}

@@ -8,6 +8,8 @@ const doctorSchema = new mongoose.Schema(
     role: { type: String, enum: ["doctor"], default: "doctor" },
     speciality: { type: String },
     clinicAddress: { type: String },
+  // image URL (Backblaze or local path)
+  image: { type: String },
     fee: { type: Number, default: 0 },
     uniqueId: { type: String, unique: true },
     availability: [

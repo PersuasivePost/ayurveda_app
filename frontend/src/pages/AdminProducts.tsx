@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_CONFIG } from '@/config/api.config'
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Link } from "react-router-dom"
 import { Plus, Edit, Trash2, Search } from "lucide-react"
@@ -138,7 +139,7 @@ export default function AdminProducts() {
                 <div className="h-48 bg-muted relative overflow-hidden">
                   {product.image ? (
                     <img
-                      src={product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`}
+                      src={product.image.startsWith('http') ? product.image : `${API_CONFIG.BASE_URL}${product.image}`}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />

@@ -24,8 +24,12 @@ export function ProtectedRoute({ children, requiredUserType }: ProtectedRoutePro
     return <Navigate to="/login" replace />
   }
 
+  if (userType === 'admin' && requiredUserType !== 'admin') {
+    return <Navigate to="/admin/dashboard" replace />
+  }
+
   if (requiredUserType && userType !== requiredUserType) {
-    // Redirect to appropriate dashboard
+    // Redirect to appropriate dashboard for non-admin users
     const redirectPath = userType === 'doctor' ? '/doctor/dashboard' : '/dashboard'
     return <Navigate to={redirectPath} replace />
   }

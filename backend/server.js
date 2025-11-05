@@ -48,26 +48,36 @@ app.get("/", (req, res) => res.send("API running"));
 // Configure CORS to allow deployed frontends. Read allowed origins from
 // the environment variable ALLOWED_ORIGINS (comma-separated). This keeps
 // deployed URLs out of source code and lets you configure them in Render/Vercel.
-const rawAllowed = process.env.ALLOWED_ORIGINS || "http://localhost:3000";
+// During local development we include Vite's default origin so the dev
+// frontend (http://localhost:5173) is allowed unless ALLOWED_ORIGINS is set.
+const rawAllowed = process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:5173";
 const allowedOrigins = rawAllowed
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean)
   .map((origin) => origin.replace(/\/+$/, ""));
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    const normalized = origin.replace(/\/+$/, "");
-    if (allowedOrigins.indexOf(normalized) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-};
+let corsOptions;
+// During development allow any origin to simplify local testing (vite/dev frontends,
+// mobile apps, curl). In production respect ALLOWED_ORIGINS to tighten CORS.
+if (process.env.NODE_ENV !== 'production') {
+  corsOptions = { origin: true, credentials: true };
+  console.log('CORS: Development mode - allowing any origin');
+} else {
+  corsOptions = {
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      const normalized = origin.replace(/\/+$/, "");
+      if (allowedOrigins.indexOf(normalized) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  };
+}
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));

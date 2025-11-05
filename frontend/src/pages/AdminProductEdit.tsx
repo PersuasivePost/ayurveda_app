@@ -101,7 +101,17 @@ export default function AdminProductEdit() {
         data.append('image', formData.image)
       }
 
-      await adminService.updateProduct(id, data)
+      const response = await adminService.updateProduct(id, data)
+      console.log('Update response:', response)
+      
+      // If there's a new image URL in the response, update the preview
+      if (response.product && response.product.image) {
+        const imageUrl = response.product.image.startsWith('http') 
+          ? response.product.image 
+          : `http://localhost:5000${response.product.image}`
+        setImagePreview(imageUrl)
+      }
+      
       alert('Product updated successfully!')
       navigate('/admin/products')
     } catch (err: any) {

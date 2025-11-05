@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
+const { uploadBuffer } = require("../config/backblaze");
 const Product = require("../schema/Product");
 const User = require("../schema/User");
 const Doctor = require("../schema/Doctor");
@@ -153,7 +154,33 @@ router.post("/products", requireAdmin, upload.single("image"), async (req, res) 
   try {
     const { name, price, description, metadata } = req.body;
     if (!name || price == null) return res.status(400).json({ message: "Missing fields" });
-    const image = req.file ? "/uploads/" + req.file.filename : req.body.image;
+    let image = req.body.image;
+    if (req.file) {
+      try {
+        console.log(`[ADMIN] Processing product image upload: ${req.file.path}`);
+        const buffer = fs.readFileSync(req.file.path);
+        console.log(`[ADMIN] Read file buffer: ${buffer.length} bytes from ${req.file.path}`);
+        const key = `products/${Date.now()}-${req.file.filename}`;
+        console.log(`[ADMIN] Calling uploadBuffer with key: ${key}`);
+        image = await uploadBuffer(buffer, key, req.file.mimetype);
+        console.log(`[ADMIN] uploadBuffer returned URL: ${image}`);
+      } catch (e) {
+        console.error("[ADMIN] Backblaze upload failed:", e.message);
+        console.error("[ADMIN] Full error:", e);
+        // fallback to local path if upload fails
+        image = "/uploads/" + req.file.filename;
+      } finally {
+        // remove the local copy if exists
+        try {
+          if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+            console.log(`[ADMIN] Deleting temporary file: ${req.file.path}`);
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (e) {
+          console.warn("[ADMIN] Could not remove temporary upload file", e.message);
+        }
+      }
+    }
     const product = new Product({ name, price, description, image, metadata });
     await product.save();
     res.json({ product });
@@ -167,7 +194,30 @@ router.post("/products", requireAdmin, upload.single("image"), async (req, res) 
 router.get("/products", requireAdmin, async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    res.json({ products });
+    
+    // If images are Backblaze URLs and bucket is private, return presigned URLs
+    const { getPresignedUrl } = require('../config/backblaze');
+    const b2Host = (process.env.B2_S3_ENDPOINT || '').replace(/^https?:\/\//, '');
+    const bucket = process.env.B2_BUCKET;
+
+    const productsOut = [];
+    for (const p of products) {
+      const obj = p.toObject();
+      if (obj.image && /^https?:\/\//i.test(obj.image) && bucket && obj.image.includes(bucket)) {
+        try {
+          // extract key from URL path
+          const parsed = new URL(obj.image);
+          const key = parsed.pathname.replace(/^\//, '');
+          const presigned = await getPresignedUrl(key, 300);
+          obj.image = presigned;
+        } catch (e) {
+          console.warn('Could not create presigned url for', obj.image, e && e.message ? e.message : e);
+        }
+      }
+      productsOut.push(obj);
+    }
+    
+    res.json({ products: productsOut });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -189,7 +239,29 @@ router.put("/products/:id", requireAdmin, upload.single("image"), async (req, re
 
     // handle image replacement
     if (req.file) {
-      const newPath = "/uploads/" + req.file.filename;
+      try {
+        console.log(`[ADMIN] Processing product image update: ${req.file.path}`);
+        const buffer = fs.readFileSync(req.file.path);
+        console.log(`[ADMIN] Read file buffer: ${buffer.length} bytes from ${req.file.path}`);
+        const key = `products/${Date.now()}-${req.file.filename}`;
+        console.log(`[ADMIN] Calling uploadBuffer with key: ${key}`);
+        updates.image = await uploadBuffer(buffer, key, req.file.mimetype);
+        console.log(`[ADMIN] uploadBuffer returned URL: ${updates.image}`);
+      } catch (e) {
+        console.error("[ADMIN] Backblaze upload failed:", e.message);
+        console.error("[ADMIN] Full error:", e);
+        updates.image = "/uploads/" + req.file.filename;
+      } finally {
+        try {
+          if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+            console.log(`[ADMIN] Deleting temporary file: ${req.file.path}`);
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (e) {
+          console.warn("[ADMIN] Could not remove temporary upload file", e.message);
+        }
+      }
+
       // remove old file if it was uploaded to our uploads dir
       if (product.image && product.image.startsWith("/uploads/")) {
         const oldFull = path.join(__dirname, "..", product.image);
@@ -199,7 +271,6 @@ router.put("/products/:id", requireAdmin, upload.single("image"), async (req, re
           console.warn("Could not remove old image", oldFull, e.message);
         }
       }
-      updates.image = newPath;
     }
 
     Object.assign(product, updates);
