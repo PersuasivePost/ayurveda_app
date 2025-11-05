@@ -6,9 +6,8 @@ import type { ErrorResponse } from '@/types/api.types'
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   timeout: API_CONFIG.TIMEOUT,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Do not set a global Content-Type header so axios can correctly
+  // set multipart/form-data boundaries when FormData is used.
 })
 
 // Request interceptor - Add auth token to headers
@@ -25,10 +24,48 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor - Handle errors globally
+// Response interceptor - Handle errors globally and refresh token if needed
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ErrorResponse>) => {
+  async (error: AxiosError<ErrorResponse>) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+
+    // Handle token expiration - attempt to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      
+      try {
+        const token = localStorage.getItem(API_CONFIG.TOKEN_KEY)
+        if (token) {
+          // Try to refresh the token
+          const response = await axios.post<{ token: string }>(
+            `${API_CONFIG.BASE_URL}/auth/refresh`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          
+          if (response.data.token) {
+            // Update token and retry request
+            localStorage.setItem(API_CONFIG.TOKEN_KEY, response.data.token)
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${response.data.token}`
+            }
+            return apiClient(originalRequest)
+          }
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError)
+        // Clear auth and redirect to login
+        localStorage.removeItem(API_CONFIG.TOKEN_KEY)
+        localStorage.removeItem('user_type')
+        localStorage.removeItem('temp_email')
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+          window.location.href = '/login'
+        }
+        return Promise.reject(refreshError)
+      }
+    }
+
     // Handle specific error codes
     if (error.response) {
       const { status, data } = error.response

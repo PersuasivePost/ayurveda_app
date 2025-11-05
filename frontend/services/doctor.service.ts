@@ -5,7 +5,7 @@ import type {
   DoctorsListResponse,
   DoctorSignupRequest,
   LoginRequest,
-  AuthResponse,
+  DoctorAuthResponse,
 } from '@/types/api.types'
 
 export const doctorService = {
@@ -50,9 +50,9 @@ export const doctorService = {
   /**
    * Doctor login
    */
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+  login: async (data: LoginRequest): Promise<DoctorAuthResponse> => {
     try {
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.DOCTORS_LOGIN, data)
+      const response = await apiClient.post<DoctorAuthResponse>(API_ENDPOINTS.DOCTORS_LOGIN, data)
       return response.data
     } catch (error) {
       throw new Error(handleApiError(error))

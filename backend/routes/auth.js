@@ -67,7 +67,7 @@ async function loginHandler(req, res) {
   }
 }
 
-// Protected route example (returns current user)
+// GET /auth/me - Get current user (requires token)
 async function meHandler(req, res) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ message: "No token" });
@@ -77,6 +77,30 @@ async function meHandler(req, res) {
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json({ user });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ message: "Invalid token" });
+  }
+}
+
+// POST /auth/refresh - Refresh the JWT token (works even if token is expired)
+async function refreshHandler(req, res) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ message: "No token" });
+  
+  const token = auth.split(" ")[1];
+  try {
+    // Verify the current token with ignoreExpiration to allow refresh of expired tokens
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    
+    // Generate a new token
+    const newToken = jwt.sign(
+      { id: decoded.id, email: decoded.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    
+    res.json({ token: newToken });
   } catch (err) {
     console.error(err);
     res.status(401).json({ message: "Invalid token" });
@@ -168,6 +192,7 @@ router.put("/profile", requireAuth, async (req, res) => {
 router.post("/signup", signupHandler);
 router.post("/login", loginHandler);
 router.get("/me", meHandler);
+router.post("/refresh", refreshHandler);
 
 // update current user profile (name, phone, address, password)
 router.patch("/me", requireAuth, async (req, res) => {

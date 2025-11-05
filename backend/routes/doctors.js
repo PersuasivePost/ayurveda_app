@@ -4,11 +4,29 @@ const Doctor = require("../schema/Doctor");
 const User = require("../schema/User");
 const Appointment = require("../schema/Appointment");
 const { requireAuth } = require("../middleware/auth");
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+const { uploadBuffer } = require("../config/backblaze");
 
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 // parse JSON bodies for this router even if client omits Content-Type header
 router.use(express.json({ type: "*/*" }));
+
+// local uploads directory (shared with server/admin)
+const uploadsDir = path.join(__dirname, "..", "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const safe = Date.now() + "-" + file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    cb(null, safe);
+  },
+});
+const upload = multer({ storage });
 
 // create a doctor account (minimal). Frontend can call this to add doctors.
 router.post("/signup", async (req, res) => {
@@ -144,10 +162,8 @@ router.get("/:id", requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router;
-
 // update doctor profile (self)
-router.patch("/me", requireAuth, async (req, res) => {
+router.patch("/me", requireAuth, upload.single("image"), async (req, res) => {
   try {
     const id = req.user.id;
     const { name, speciality, clinicAddress, fee, phone, password } = req.body;
@@ -158,6 +174,34 @@ router.patch("/me", requireAuth, async (req, res) => {
     if (fee !== undefined) updates.fee = fee;
     if (phone) updates.phone = phone;
     if (password) updates.password = await bcrypt.hash(password, 10);
+
+    // handle image upload if provided
+    if (req.file) {
+      try {
+        console.log(`[DOCTORS] Processing doctor image upload: ${req.file.path}`);
+        const buffer = fs.readFileSync(req.file.path);
+        console.log(`[DOCTORS] Read file buffer: ${buffer.length} bytes from ${req.file.path}`);
+        const key = `doctors/${Date.now()}-${req.file.filename}`;
+        console.log(`[DOCTORS] Calling uploadBuffer with key: ${key}`);
+        updates.image = await uploadBuffer(buffer, key, req.file.mimetype);
+        console.log(`[DOCTORS] uploadBuffer returned URL: ${updates.image}`);
+      } catch (e) {
+        console.error("[DOCTORS] Backblaze upload failed:", e.message);
+        console.error("[DOCTORS] Full error:", e);
+        // fallback to local path
+        updates.image = "/uploads/" + req.file.filename;
+      } finally {
+        try {
+          if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+            console.log(`[DOCTORS] Deleting temporary file: ${req.file.path}`);
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (e) {
+          console.warn("[DOCTORS] Could not remove temporary upload file", e.message);
+        }
+      }
+    }
+
     const doc = await Doctor.findByIdAndUpdate(id, updates, {
       new: true,
     }).select("-password");
@@ -181,3 +225,5 @@ router.delete("/me", requireAuth, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+module.exports = router;

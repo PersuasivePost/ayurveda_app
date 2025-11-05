@@ -20,6 +20,7 @@ router.post("/add", requireAuth, async (req, res) => {
 
     user.cart = user.cart || [];
     const existing = user.cart.find((c) => String(c.product) === String(productId));
+<<<<<<< HEAD
     
     // If quantity is 0, remove the item
     if (quantity === 0) {
@@ -30,11 +31,78 @@ router.post("/add", requireAuth, async (req, res) => {
     } else {
       // Add new item
       user.cart.push({ product: productId, quantity: quantity || 1 });
+=======
+    if (existing) {
+      existing.quantity = (existing.quantity || 0) + (quantity || 1);
+      // Remove item if quantity becomes 0 or less
+      if (existing.quantity <= 0) {
+        user.cart = user.cart.filter((c) => String(c.product) !== String(productId));
+      }
+    } else {
+      // Only add if quantity is positive
+      if ((quantity || 1) > 0) {
+        user.cart.push({ product: productId, quantity: quantity || 1 });
+      }
+>>>>>>> da77f9ce478641b245f7316c87122d4f16614301
     }
     
     await user.save();
     const populated = await User.findById(userId).populate("cart.product");
-    res.json({ cart: populated.cart });
+    
+    // Generate presigned URLs for Backblaze images
+    const { getPresignedUrl } = require('../config/backblaze');
+    const bucket = process.env.B2_BUCKET;
+    
+    const cart = populated.cart || [];
+    const cartOut = [];
+    
+    for (const item of cart) {
+      const cartItem = { ...item.toObject ? item.toObject() : item };
+      const prod = cartItem.product;
+      
+      if (prod) {
+        const prodObj = prod.toObject ? prod.toObject() : prod;
+        
+        // Process main image
+        if (prodObj.image && /^https?:\/\//i.test(prodObj.image) && bucket && prodObj.image.includes(bucket)) {
+          try {
+            const parsed = new URL(prodObj.image);
+            const key = parsed.pathname.replace(/^\//, '');
+            const presigned = await getPresignedUrl(key, 300);
+            prodObj.image = presigned;
+          } catch (e) {
+            console.warn('Could not create presigned url for main image', prodObj.image, e && e.message ? e.message : e);
+          }
+        }
+        
+        // Process images array
+        if (prodObj.images && Array.isArray(prodObj.images)) {
+          const presignedImages = [];
+          for (const img of prodObj.images) {
+            if (img && /^https?:\/\//i.test(img) && bucket && img.includes(bucket)) {
+              try {
+                const parsed = new URL(img);
+                const key = parsed.pathname.replace(/^\//, '');
+                const presigned = await getPresignedUrl(key, 300);
+                presignedImages.push(presigned);
+              } catch (e) {
+                console.warn('Could not create presigned url for image', img, e && e.message ? e.message : e);
+                presignedImages.push(img);
+              }
+            } else {
+              presignedImages.push(img);
+            }
+          }
+          prodObj.images = presignedImages;
+        }
+        
+        cartItem.product = prodObj;
+      }
+      
+      cartOut.push(cartItem);
+    }
+    
+    res.json({ cart: cartOut });
   } catch (err) {
     console.error("Cart add error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -47,11 +115,68 @@ router.get("/", requireAuth, async (req, res) => {
     const user = await User.findById(req.user.id).populate("cart.product");
     if (!user) return res.status(404).json({ message: "User not found" });
     
+<<<<<<< HEAD
     // Log cart details for debugging
     console.log("Cart request for user:", req.user.id);
     console.log("Cart items:", user.cart?.length || 0);
     
     res.json({ cart: user.cart || [] });
+=======
+    // Generate presigned URLs for Backblaze images
+    const { getPresignedUrl } = require('../config/backblaze');
+    const bucket = process.env.B2_BUCKET;
+    
+    const cart = user.cart || [];
+    const cartOut = [];
+    
+    for (const item of cart) {
+      const cartItem = { ...item.toObject ? item.toObject() : item };
+      const product = cartItem.product;
+      
+      if (product) {
+        const prodObj = product.toObject ? product.toObject() : product;
+        
+        // Process main image
+        if (prodObj.image && /^https?:\/\//i.test(prodObj.image) && bucket && prodObj.image.includes(bucket)) {
+          try {
+            const parsed = new URL(prodObj.image);
+            const key = parsed.pathname.replace(/^\//, '');
+            const presigned = await getPresignedUrl(key, 300);
+            prodObj.image = presigned;
+          } catch (e) {
+            console.warn('Could not create presigned url for main image', prodObj.image, e && e.message ? e.message : e);
+          }
+        }
+        
+        // Process images array
+        if (prodObj.images && Array.isArray(prodObj.images)) {
+          const presignedImages = [];
+          for (const img of prodObj.images) {
+            if (img && /^https?:\/\//i.test(img) && bucket && img.includes(bucket)) {
+              try {
+                const parsed = new URL(img);
+                const key = parsed.pathname.replace(/^\//, '');
+                const presigned = await getPresignedUrl(key, 300);
+                presignedImages.push(presigned);
+              } catch (e) {
+                console.warn('Could not create presigned url for image', img, e && e.message ? e.message : e);
+                presignedImages.push(img);
+              }
+            } else {
+              presignedImages.push(img);
+            }
+          }
+          prodObj.images = presignedImages;
+        }
+        
+        cartItem.product = prodObj;
+      }
+      
+      cartOut.push(cartItem);
+    }
+    
+    res.json({ cart: cartOut });
+>>>>>>> da77f9ce478641b245f7316c87122d4f16614301
   } catch (err) {
     console.error("Get cart error:", err);
     res.status(500).json({ message: "Server error", error: err.message });

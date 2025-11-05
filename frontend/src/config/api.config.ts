@@ -33,6 +33,8 @@ export const API_ENDPOINTS = {
   // Cart
   CART: '/cart',
   CART_ADD: '/cart/add',
+  CART_UPDATE: (id: string) => `/cart/update/${id}`,
+  CART_REMOVE: (id: string) => `/cart/remove/${id}`,
   CART_CHECKOUT: '/cart/checkout',
   
   // Orders

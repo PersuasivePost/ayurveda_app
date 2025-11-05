@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   
   // Admin
   ADMIN_LOGIN: '/admin/login',
+  ADMIN_STATS: '/admin/stats',
   
   // Products
   PRODUCTS: '/products',
@@ -38,4 +39,11 @@ export const API_ENDPOINTS = {
   // Orders
   ORDERS: '/orders',
   ORDER_BY_ID: (id: string) => `/orders/${id}`,
+  
+  // Dosha Quiz
+  DOSHA_QUESTIONS: '/dosha/questions',
+  DOSHA_SUBMIT: '/dosha/submit',
+  DOSHA_RESULT: '/dosha/result',
+  DOSHA_HISTORY: '/dosha/history',
+  DOSHA_DIET: '/dosha/diet',
 }

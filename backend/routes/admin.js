@@ -3,7 +3,12 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
+const { uploadBuffer } = require("../config/backblaze");
 const Product = require("../schema/Product");
+const User = require("../schema/User");
+const Doctor = require("../schema/Doctor");
+const Appointment = require("../schema/Appointment");
+const Order = require("../schema/Order");
 const { requireAdmin } = require("../middleware/adminAuth");
 
 // ensure uploads directory exists
@@ -50,14 +55,171 @@ router.post("/login", (req, res) => {
   res.json({ token, admin: { email: found.email } });
 });
 
+// Get admin dashboard statistics
+router.get("/stats", requireAdmin, async (req, res) => {
+  try {
+    // Get counts
+    const totalUsers = await User.countDocuments();
+    const totalDoctors = await Doctor.countDocuments();
+    const totalAppointments = await Appointment.countDocuments();
+    const totalProducts = await Product.countDocuments();
+    
+    // Get total orders and revenue
+    const orders = await Order.find();
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    
+    // Get recent appointments (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentAppointments = await Appointment.countDocuments({
+      createdAt: { $gte: thirtyDaysAgo }
+    });
+    
+    // Calculate percentage changes (simplified - comparing with previous period)
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const previousPeriodAppointments = await Appointment.countDocuments({
+      createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
+    });
+    
+    const appointmentChange = previousPeriodAppointments > 0 
+      ? Math.round(((recentAppointments - previousPeriodAppointments) / previousPeriodAppointments) * 100)
+      : 0;
+    
+    // Get recent activity
+    const recentActivities = [];
+    
+    // Recent users
+    const recentUsers = await User.find().sort({ createdAt: -1 }).limit(2).select('name createdAt');
+    recentUsers.forEach(user => {
+      recentActivities.push({
+        action: "New user registered",
+        user: user.name,
+        time: user.createdAt
+      });
+    });
+    
+    // Recent appointments
+    const recentAppts = await Appointment.find()
+      .sort({ createdAt: -1 })
+      .limit(2)
+      .populate('doctor', 'name')
+      .populate('patient', 'name');
+    recentAppts.forEach(appt => {
+      recentActivities.push({
+        action: "New appointment booked",
+        user: appt.doctor?.name || "Unknown Doctor",
+        time: appt.createdAt
+      });
+    });
+    
+    // Recent orders
+    const recentOrders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(2)
+      .populate('user', 'name');
+    recentOrders.forEach(order => {
+      recentActivities.push({
+        action: "Product order placed",
+        user: order.user?.name || "Unknown User",
+        time: order.createdAt
+      });
+    });
+    
+    // Sort all activities by time
+    recentActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
+    
+    res.json({
+      stats: {
+        totalUsers,
+        totalDoctors,
+        totalAppointments,
+        totalProducts,
+        totalOrders,
+        totalRevenue,
+        appointmentChange
+      },
+      recentActivities: recentActivities.slice(0, 5)
+    });
+  } catch (err) {
+    console.error("Error fetching admin stats:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // create a product (admin only)
 // create a product (admin only). Accepts multipart/form-data with optional `image` file.
 router.post("/products", requireAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { name, price, description, metadata } = req.body;
+    const { 
+      name, 
+      price, 
+      description, 
+      longDescription,
+      category,
+      stock,
+      usage,
+      benefits,
+      ingredients,
+      tags,
+      metadata 
+    } = req.body;
+    
     if (!name || price == null) return res.status(400).json({ message: "Missing fields" });
-    const image = req.file ? "/uploads/" + req.file.filename : req.body.image;
-    const product = new Product({ name, price, description, image, metadata });
+    
+    let image = req.body.image;
+    const images = [];
+
+    // Handle main image
+    if (req.file) {
+      try {
+        console.log(`[ADMIN] Processing product image upload: ${req.file.path}`);
+        const buffer = fs.readFileSync(req.file.path);
+        console.log(`[ADMIN] Read file buffer: ${buffer.length} bytes from ${req.file.path}`);
+        const key = `products/${Date.now()}-${req.file.filename}`;
+        console.log(`[ADMIN] Calling uploadBuffer with key: ${key}`);
+        image = await uploadBuffer(buffer, key, req.file.mimetype);
+        images.push(image);
+        console.log(`[ADMIN] uploadBuffer returned URL: ${image}`);
+      } catch (e) {
+        console.error("[ADMIN] Backblaze upload failed:", e.message);
+        console.error("[ADMIN] Full error:", e);
+        // fallback to local path if upload fails
+        image = "/uploads/" + req.file.filename;
+        images.push(image);
+      } finally {
+        // remove the local copy if exists
+        try {
+          if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+            console.log(`[ADMIN] Deleting temporary file: ${req.file.path}`);
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (e) {
+          console.warn("[ADMIN] Could not remove temporary upload file", e.message);
+        }
+      }
+    }
+
+    const product = new Product({ 
+      name, 
+      price, 
+      description, 
+      longDescription: longDescription || description,
+      category: category || 'General',
+      stock: stock ? parseInt(stock) : 100,
+      usage: usage || '',
+      image, 
+      images,
+      benefits: benefits ? JSON.parse(benefits) : [],
+      ingredients: ingredients ? JSON.parse(ingredients) : [],
+      tags: tags ? JSON.parse(tags) : [],
+      avgRating: 0,
+      reviewCount: 0,
+      reviews: [],
+      metadata 
+    });
+    
     await product.save();
     res.json({ product });
   } catch (err) {
@@ -70,7 +232,53 @@ router.post("/products", requireAdmin, upload.single("image"), async (req, res) 
 router.get("/products", requireAdmin, async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    res.json({ products });
+    
+    // If images are Backblaze URLs and bucket is private, return presigned URLs
+    const { getPresignedUrl } = require('../config/backblaze');
+    const bucket = process.env.B2_BUCKET;
+
+    const productsOut = [];
+    for (const p of products) {
+      const obj = p.toObject();
+      
+      // Process main image
+      if (obj.image && /^https?:\/\//i.test(obj.image) && bucket && obj.image.includes(bucket)) {
+        try {
+          // extract key from URL path
+          const parsed = new URL(obj.image);
+          const key = parsed.pathname.replace(/^\//, '');
+          const presigned = await getPresignedUrl(key, 300);
+          obj.image = presigned;
+        } catch (e) {
+          console.warn('Could not create presigned url for main image', obj.image, e && e.message ? e.message : e);
+        }
+      }
+      
+      // Process images array
+      if (obj.images && Array.isArray(obj.images)) {
+        const presignedImages = [];
+        for (const img of obj.images) {
+          if (img && /^https?:\/\//i.test(img) && bucket && img.includes(bucket)) {
+            try {
+              const parsed = new URL(img);
+              const key = parsed.pathname.replace(/^\//, '');
+              const presigned = await getPresignedUrl(key, 300);
+              presignedImages.push(presigned);
+            } catch (e) {
+              console.warn('Could not create presigned url for image', img, e && e.message ? e.message : e);
+              presignedImages.push(img);
+            }
+          } else {
+            presignedImages.push(img);
+          }
+        }
+        obj.images = presignedImages;
+      }
+      
+      productsOut.push(obj);
+    }
+    
+    res.json({ products: productsOut });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -92,7 +300,29 @@ router.put("/products/:id", requireAdmin, upload.single("image"), async (req, re
 
     // handle image replacement
     if (req.file) {
-      const newPath = "/uploads/" + req.file.filename;
+      try {
+        console.log(`[ADMIN] Processing product image update: ${req.file.path}`);
+        const buffer = fs.readFileSync(req.file.path);
+        console.log(`[ADMIN] Read file buffer: ${buffer.length} bytes from ${req.file.path}`);
+        const key = `products/${Date.now()}-${req.file.filename}`;
+        console.log(`[ADMIN] Calling uploadBuffer with key: ${key}`);
+        updates.image = await uploadBuffer(buffer, key, req.file.mimetype);
+        console.log(`[ADMIN] uploadBuffer returned URL: ${updates.image}`);
+      } catch (e) {
+        console.error("[ADMIN] Backblaze upload failed:", e.message);
+        console.error("[ADMIN] Full error:", e);
+        updates.image = "/uploads/" + req.file.filename;
+      } finally {
+        try {
+          if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+            console.log(`[ADMIN] Deleting temporary file: ${req.file.path}`);
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (e) {
+          console.warn("[ADMIN] Could not remove temporary upload file", e.message);
+        }
+      }
+
       // remove old file if it was uploaded to our uploads dir
       if (product.image && product.image.startsWith("/uploads/")) {
         const oldFull = path.join(__dirname, "..", product.image);
@@ -102,7 +332,6 @@ router.put("/products/:id", requireAdmin, upload.single("image"), async (req, re
           console.warn("Could not remove old image", oldFull, e.message);
         }
       }
-      updates.image = newPath;
     }
 
     Object.assign(product, updates);

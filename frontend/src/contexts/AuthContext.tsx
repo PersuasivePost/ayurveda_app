@@ -30,11 +30,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           if (storedUserType === 'patient') {
             // Try to fetch current user for patients
-            const userData = await authService.getCurrentUser()
-            setUser(userData)
-            setUserType('patient')
+            try {
+              const userData = await authService.getCurrentUser()
+              setUser(userData)
+              setUserType('patient')
+            } catch (error) {
+              // If we can't fetch user data but have a valid token, keep the user logged in
+              // and create a temporary user object
+              console.warn('Could not fetch patient data, but token exists. Staying logged in.')
+              setUserType('patient')
+              setUser({
+                id: token.substring(0, 10),
+                name: 'Patient',
+                email: localStorage.getItem('temp_email') || '',
+                phone: '',
+              } as any)
+            }
           } else {
-            // For admin/doctor, just set the userType
+            // For admin/doctor, just set the userType (don't try to fetch)
             setUserType(storedUserType)
             // Set a minimal user object
             setUser({
@@ -45,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } as any)
           }
         } catch (error) {
-          // Token is invalid or expired
+          // Token is invalid or expired - only clear if we're sure
           console.error('Auth check failed:', error)
           localStorage.removeItem(API_CONFIG.TOKEN_KEY)
           localStorage.removeItem('user_type')
@@ -62,24 +75,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = (token: string, type: 'patient' | 'doctor' | 'admin', userData?: User) => {
+<<<<<<< HEAD
     console.log('AuthContext login called:', { type, userData })
+=======
+    console.log("AuthContext.login called with:", { type, hasUserData: !!userData })
+    
+>>>>>>> da77f9ce478641b245f7316c87122d4f16614301
     localStorage.setItem(API_CONFIG.TOKEN_KEY, token)
     localStorage.setItem('user_type', type)
+    
     setUserType(type)
+    
     if (userData) {
       console.log('Setting user data:', userData)
       setUser(userData)
+      console.log("User set:", userData)
     } else if (type === 'admin' || type === 'doctor') {
       // For admin/doctor, create a minimal user object so isAuthenticated becomes true
+<<<<<<< HEAD
       const minimalUser = {
+=======
+      const tempUser = {
+>>>>>>> da77f9ce478641b245f7316c87122d4f16614301
         id: token.substring(0, 10), // Use part of token as temp ID
         name: type.charAt(0).toUpperCase() + type.slice(1),
         email: localStorage.getItem('temp_email') || '',
         phone: '',
+<<<<<<< HEAD
       } as any // Use any to bypass type checking for admin/doctor
       console.log('Setting minimal user:', minimalUser)
       setUser(minimalUser)
+=======
+      } as any
+      setUser(tempUser)
+      console.log("Temp user set for", type, ":", tempUser)
+>>>>>>> da77f9ce478641b245f7316c87122d4f16614301
     }
+    
+    console.log("Login complete. isAuthenticated should be true")
   }
 
   const logout = () => {

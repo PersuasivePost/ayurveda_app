@@ -1,11 +1,13 @@
 import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { API_CONFIG } from "@/config/api.config"
 import { productService } from "@/services/product.service"
 import { cartService } from "@/services/cart.service"
 import type { Product } from "@/types/api.types"
 import { isAuthenticated } from "@/lib/api-client"
 import { useNavigate } from "react-router-dom"
+import { Star } from "lucide-react"
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
@@ -88,10 +90,13 @@ export default function Products() {
           {!loading && !error && products.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((product) => (
-                <div key={product._id} className="bg-card border border-border rounded-lg p-6 space-y-4">
+                <div key={product._id} className="bg-card border border-border rounded-lg p-6 space-y-4 hover:shadow-lg transition-shadow cursor-pointer group" onClick={() => navigate(`/products/${product._id}`)}>
                   <div className="w-full h-40 bg-muted rounded-md flex items-center justify-center text-4xl overflow-hidden">
                     {product.image ? (
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        (() => {
+                          const src = product.image.startsWith('http') ? product.image : `${API_CONFIG.BASE_URL}${product.image}`;
+                          return <img src={src} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />;
+                        })()
                     ) : (
                       "🌿"
                     )}
@@ -104,7 +109,10 @@ export default function Products() {
                     <span className="text-lg font-bold text-primary">₹{product.price}</span>
                     <Button 
                       size="sm" 
-                      onClick={() => handleAddToCart(product._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product._id);
+                      }}
                       disabled={addingToCart === product._id}
                     >
                       {addingToCart === product._id ? "Adding..." : "Add to Cart"}

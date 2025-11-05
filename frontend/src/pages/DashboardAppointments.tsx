@@ -70,29 +70,59 @@ export default function DashboardAppointments() {
             {appointments.map((apt) => {
               const doctor = typeof apt.doctor === 'object' ? apt.doctor : null
               const doctorName = doctor?.name || 'Doctor'
+              const doctorSpeciality = doctor?.speciality || ''
+              const doctorFee = doctor?.fee || apt.fee || 0
               
               return (
                 <div key={apt._id} className="bg-card border border-border rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-foreground">{doctorName}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(apt.date)} at {formatTime(apt.date)}
-                      </p>
-                      {apt.mode && (
-                        <p className="text-xs text-muted-foreground">Mode: {apt.mode}</p>
-                      )}
-                      {apt.notes && (
-                        <p className="text-xs text-muted-foreground">Notes: {apt.notes}</p>
-                      )}
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div>
+                        <h3 className="font-semibold text-foreground text-lg">{doctorName}</h3>
+                        {doctorSpeciality && (
+                          <p className="text-sm text-muted-foreground">{doctorSpeciality}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-foreground">
+                          <span className="font-medium">Date:</span> {formatDate(apt.date)} at {formatTime(apt.date)}
+                        </p>
+                        {apt.mode && (
+                          <p className="text-sm text-foreground">
+                            <span className="font-medium">Mode:</span> <span className="capitalize">{apt.mode}</span>
+                          </p>
+                        )}
+                        {doctorFee > 0 && (
+                          <p className="text-sm text-foreground">
+                            <span className="font-medium">Fee:</span> ₹{doctorFee}
+                          </p>
+                        )}
+                        {apt.payment_status && (
+                          <p className="text-sm text-foreground">
+                            <span className="font-medium">Payment:</span>{' '}
+                            <span className={`capitalize ${
+                              apt.payment_status === 'paid' ? 'text-green-600' :
+                              apt.payment_status === 'failed' ? 'text-red-600' :
+                              'text-yellow-600'
+                            }`}>
+                              {apt.payment_status}
+                            </span>
+                          </p>
+                        )}
+                        {apt.notes && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            <span className="font-medium">Notes:</span> {apt.notes}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-4 ${
                       apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 
                       apt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                       apt.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {apt.status || 'Pending'}
+                      {apt.status || 'Requested'}
                     </span>
                   </div>
                 </div>

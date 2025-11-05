@@ -12,6 +12,7 @@ import FindDoctors from './pages/FindDoctors'
 import Doctors from './pages/Doctors'
 import BookingPage from './pages/BookingPage'
 import Products from './pages/Products'
+import ProductDetail from './pages/ProductDetail'
 import LearnAyurveda from './pages/LearnAyurveda'
 import QuickRemedies from './pages/QuickRemedies'
 import Quiz from './pages/Quiz'
@@ -36,6 +37,7 @@ import AdminUsers from './pages/AdminUsers'
 import AdminContent from './pages/AdminContent'
 import AdminProducts from './pages/AdminProducts'
 import AdminProductAdd from './pages/AdminProductAdd'
+import AdminProductEdit from './pages/AdminProductEdit'
 
 function App() {
   return (
@@ -52,6 +54,7 @@ function App() {
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/booking/:doctorId" element={<BookingPage />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/learn-ayurveda" element={<LearnAyurveda />} />
           <Route path="/quick-remedies" element={<QuickRemedies />} />
           <Route path="/quiz" element={<Quiz />} />
@@ -77,6 +80,7 @@ function App() {
           <Route path="/admin/content" element={<ProtectedRoute requiredUserType="admin"><AdminContent /></ProtectedRoute>} />
           <Route path="/admin/products" element={<ProtectedRoute requiredUserType="admin"><AdminProducts /></ProtectedRoute>} />
           <Route path="/admin/products/add" element={<ProtectedRoute requiredUserType="admin"><AdminProductAdd /></ProtectedRoute>} />
+          <Route path="/admin/products/edit/:id" element={<ProtectedRoute requiredUserType="admin"><AdminProductEdit /></ProtectedRoute>} />
         </Routes>
       </Router>
       </AuthProvider>

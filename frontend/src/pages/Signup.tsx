@@ -24,8 +24,19 @@ export default function SignUpPage() {
           password: data.password,
         })
         console.log("Doctor signup successful:", response.doctor.name)
-        alert("Doctor account created successfully! Please login to continue.")
-        navigate("/login")
+        // Auto-login after signup
+        const loginResponse = await doctorService.login({
+          email: data.email,
+          password: data.password,
+        })
+        // Convert doctor response to user format for auth context
+        const doctorAsUser = {
+          id: loginResponse.doctor?.id || '',
+          name: loginResponse.doctor?.name || data.name,
+          email: loginResponse.doctor?.email || data.email,
+        }
+        authLogin(loginResponse.token, 'doctor', doctorAsUser as any)
+        navigate("/")
       } else {
         // For patient/admin, use regular signup
         const response = await authService.signup({
@@ -35,11 +46,11 @@ export default function SignUpPage() {
           accountType: data.userType === 'admin' ? 'pro' : (data.userType as 'free' | 'pro')
         })
         console.log("Signup successful:", response.user.name)
-        // Store token and redirect to dashboard
+        // Store token and redirect to home
         if (response.token) {
           authLogin(response.token, data.userType, response.user)
         }
-        navigate("/dashboard")
+        navigate("/")
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")
