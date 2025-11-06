@@ -44,7 +44,10 @@ export default function DoctorDashboard() {
     return aptDate.toDateString() === today.toDateString()
   })
 
-  const pendingAppointments = appointments.filter(apt => apt.status === 'pending')
+  // Some codepaths use 'requested' while others use 'pending' for a newly created appointment.
+  // Cast to string here to avoid a TS type mismatch if the imported Appointment type uses
+  // the other literal. Treat both as a pending/requested state.
+  const pendingAppointments = appointments.filter(apt => ((apt.status as string) === 'pending' || (apt.status as string) === 'requested'))
   const totalPatients = new Set(appointments.map(apt => apt.patient)).size
 
   if (loading) {
@@ -149,7 +152,7 @@ export default function DoctorDashboard() {
                       {apt.notes}
                     </div>
                   )}
-                  {apt.status === 'pending' && (
+                  {((apt.status as string) === 'pending' || (apt.status as string) === 'requested') && (
                     <button
                       onClick={() => handleConfirm(apt._id)}
                       className="mt-2 w-full bg-primary text-primary-foreground py-2 rounded-md hover:bg-primary/90"

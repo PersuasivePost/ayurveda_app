@@ -133,7 +133,7 @@ export default function AdminProductAdd() {
       }
       
       // Add additional images
-      formData.images.forEach((img, idx) => {
+      formData.images.forEach((img) => {
         data.append(`additionalImages`, img)
       })
       
