@@ -171,16 +171,14 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
-// checkout - requires address and phone; creates order with pending payment
+// checkout - creates order with optional address and phone
 router.post("/checkout", requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("cart.product");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const address = req.body.address || user.address;
-    const phone = req.body.phone || user.phone;
-    if (!address || !phone)
-      return res.status(400).json({ message: "Address and phone are required to place an order" });
+    const address = req.body.address || user.address || "N/A";
+    const phone = req.body.phone || user.phone || "N/A";
 
     const cart = user.cart || [];
     if (!cart.length) return res.status(400).json({ message: "Cart is empty" });

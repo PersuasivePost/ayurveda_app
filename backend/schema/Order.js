@@ -11,8 +11,8 @@ const orderSchema = new mongoose.Schema(
         quantity: Number,
       },
     ],
-    address: { type: String, required: true },
-    phone: { type: String, required: true },
+    address: { type: String, default: "N/A" },
+    phone: { type: String, default: "N/A" },
     total: { type: Number, required: true },
     status: { type: String, enum: ["placed", "shipped", "delivered", "cancelled"], default: "placed" },
     // Payment related fields

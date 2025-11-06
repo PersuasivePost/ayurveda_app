@@ -4,16 +4,21 @@ import { PageLayout } from "@/components/layout/page-layout"
 import { Button } from "@/components/ui/button"
 import { appointmentService } from "@/services/appointment.service"
 import { doctorService } from "@/services/doctor.service"
+import { paymentService } from "@/services"
+import { useAuth } from "@/contexts/AuthContext"
+import { initializeRazorpay, createAppointmentPaymentOptions, type RazorpayResponse } from "../lib/razorpay"
 import type { Doctor } from "@/types/api.types"
 
 export default function BookingPage() {
   const { doctorId } = useParams<{ doctorId: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   
   const [doctor, setDoctor] = useState<Doctor | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
   
   const [formData, setFormData] = useState({
     date: '',
@@ -64,28 +69,73 @@ export default function BookingPage() {
       setLoading(true)
       setError(null)
       
-      // Combine date and time into a single Date object
+      // Step 1: Create appointment request
       const dateTime = new Date(`${formData.date}T${formData.time}:00`)
       
-      await appointmentService.createAppointment({
+      const appointment = await appointmentService.createAppointment({
         doctorId,
         date: dateTime.toISOString(),
         mode: formData.mode,
         notes: formData.notes
       })
       
-      setSuccess(true)
+      // Step 2: Create Razorpay order for the appointment
+      setPaymentProcessing(true)
+      const orderData = await paymentService.createAppointmentOrder(appointment._id)
       
-      // Redirect to appointments page after 2 seconds
-      setTimeout(() => {
-        navigate('/dashboard/appointments')
-      }, 2000)
+      // Step 3: Initialize Razorpay payment
+      const paymentOptions = createAppointmentPaymentOptions(
+        appointment._id,
+        {
+          razorpayOrderId: orderData.order.id,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          keyId: orderData.key_id,
+        },
+        {
+          name: user?.name,
+          email: user?.email,
+          phone: user?.phone,
+        },
+        doctor?.name || 'Doctor',
+        async (response: RazorpayResponse) => {
+          // Step 4: Verify payment on success
+          try {
+            await paymentService.verifyAppointmentPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              appointmentId: appointment._id,
+            })
+            
+            setSuccess(true)
+            setPaymentProcessing(false)
+            
+            // Redirect to appointments page after 2 seconds
+            setTimeout(() => {
+              navigate('/dashboard/appointments')
+            }, 2000)
+          } catch (err) {
+            setError("Payment verification failed. Please contact support.")
+            setPaymentProcessing(false)
+            console.error("Payment verification error:", err)
+          }
+        },
+        () => {
+          // Payment cancelled/dismissed
+          setPaymentProcessing(false)
+          setError("Payment was cancelled. Please try again.")
+        }
+      )
+      
+      await initializeRazorpay(paymentOptions)
+      setLoading(false)
       
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to book appointment")
       console.error("Booking error:", err)
-    } finally {
       setLoading(false)
+      setPaymentProcessing(false)
     }
   }
 
@@ -195,9 +245,12 @@ export default function BookingPage() {
               type="submit" 
               className="w-full" 
               size="lg"
-              disabled={loading || success}
+              disabled={loading || success || paymentProcessing}
             >
-              {loading ? "Booking..." : success ? "Booked!" : "Confirm Booking"}
+              {loading ? "Creating Appointment..." : 
+               paymentProcessing ? "Processing Payment..." : 
+               success ? "Booked!" : 
+               "Book & Pay Now"}
             </Button>
           </form>
         </div>

@@ -109,18 +109,11 @@ export default function Cart() {
     setError(null) // Clear previous errors
     try {
       console.log("Step 1: Creating order...")
-      // Ensure user has provided phone and address before creating order
-      if (!user || !user.phone || !user.address) {
-        setCheckingOut(false)
-        alert('Please add your phone number and delivery address in your profile before placing an order.')
-        navigate('/dashboard/profile')
-        return
-      }
 
-      // Step 1: Create order in backend using user's stored address/phone
+      // Step 1: Create order in backend (address and phone are now optional)
       const order = await cartService.checkout({
-        address: user.address,
-        phone: user.phone,
+        address: user?.address || 'N/A',
+        phone: user?.phone || 'N/A',
       })
       console.log("Order created:", order._id)
       
